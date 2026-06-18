@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:saloon_go/core/theme.dart';
 import 'package:saloon_go/screens/bookings/bookings_screen.dart';
 import 'package:saloon_go/screens/dashboard/dashboard_screen.dart';
+import 'package:saloon_go/screens/stylists/stylists_screen.dart';
 import 'package:saloon_go/widgets/sidebar.dart';
 
 class MainNavigation extends StatefulWidget {
@@ -14,15 +15,10 @@ class MainNavigation extends StatefulWidget {
 class _MainNavigationState extends State<MainNavigation> {
   int _selectedIndex = 0;
 
-  // List of screens - add more as you create them
   final List<Widget> _screens = [
     const DashboardScreen(),
     const BookingsScreen(),
-    // Add other screens here when created
-    // const StylistsScreen(),
-    // const CustomersScreen(),
-    // const AnalyticsScreen(),
-    // const SettingsScreen(),
+    const StylistsScreen(),
   ];
 
   @override
