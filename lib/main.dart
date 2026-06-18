@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:saloon_go/core/theme.dart';
-import 'package:saloon_go/screens/dashboard/dashboard_screen.dart';
+import 'package:saloon_go/screens/main_navigation.dart';
 
 void main() {
   runApp(const SalonGoApp());
@@ -15,7 +15,7 @@ class SalonGoApp extends StatelessWidget {
       title: 'SalonGo Admin',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.theme,
-      home: const DashboardScreen(),
+      home: const MainNavigation(), // Changed from DashboardScreen to MainNavigation
     );
   }
 }
