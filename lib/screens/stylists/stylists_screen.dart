@@ -206,20 +206,20 @@ class _StylistsScreenState extends State<StylistsScreen> {
     );
   }
 
-  Widget _activeNowCard() {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: AppColors.surfaceContainerLow,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.primary.withOpacity(0.06),
-            blurRadius: 24,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
+Widget _activeNowCard() {
+  return Container(
+    padding: const EdgeInsets.all(20),
+    decoration: BoxDecoration(
+      color: AppColors.surfaceContainerLow,
+      borderRadius: BorderRadius.circular(16),
+      boxShadow: [
+        BoxShadow(
+          color: AppColors.primary.withOpacity(0.06),
+          blurRadius: 24,
+          offset: const Offset(0, 4),
+        ),
+      ],
+    ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
