@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:saloon_go/core/theme.dart';
+import 'package:saloon_go/screens/analytics/analytics_screen.dart';
 import 'package:saloon_go/screens/bookings/bookings_screen.dart';
 import 'package:saloon_go/screens/dashboard/dashboard_screen.dart';
 import 'package:saloon_go/screens/stylists/stylists_screen.dart';
@@ -19,6 +20,8 @@ class _MainNavigationState extends State<MainNavigation> {
     const DashboardScreen(),
     const BookingsScreen(),
     const StylistsScreen(),
+    const Center(child: Text('Customers')),
+    const AnalyticsScreen(),
   ];
 
   @override
