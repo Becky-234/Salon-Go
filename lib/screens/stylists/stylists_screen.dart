@@ -517,7 +517,7 @@ Widget _activeNowCard() {
       child: Row(
         children: [
           Container(
-            width: 260,
+            width: 560,
             height: 38,
             decoration: BoxDecoration(
               color: AppColors.surfaceContainerLow,
