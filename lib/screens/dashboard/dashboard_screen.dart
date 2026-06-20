@@ -15,6 +15,17 @@ class DashboardScreen extends StatefulWidget {
 
 class _DashboardScreenState extends State<DashboardScreen> {
   // REMOVED: int _selectedIndex = 0; - Now managed by parent
+   final TextEditingController _searchController = TextEditingController();
+
+  void _onSearchChanged(String query) {
+    print('Search query: $query');
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -116,23 +127,34 @@ class _DashboardScreenState extends State<DashboardScreen> {
       color: AppColors.surface,
       child: Row(
         children: [
-          Container(
-            width: 560,
-            height: 38,
-            decoration: BoxDecoration(
-              color: AppColors.surfaceContainerLow,
-              borderRadius: BorderRadius.circular(20),
-            ),
-            child: const Row(
-              children: [
-                SizedBox(width: 12),
-                Icon(Icons.search, color: AppColors.textGrey, size: 18),
-                SizedBox(width: 8),
-                Text('Search appointments, clients or styles...',
-                    style: TextStyle(fontSize: 13, color: AppColors.textGrey)),
-              ],
-            ),
+     Container(
+  width: 560,
+  height: 38,
+  padding: const EdgeInsets.symmetric(horizontal: 12),
+  decoration: BoxDecoration(
+    color: AppColors.surfaceContainerLow,
+    borderRadius: BorderRadius.circular(20),
+  ),
+  child: Row(
+    children: [
+      const Icon(Icons.search, color: AppColors.textGrey, size: 18),
+      const SizedBox(width: 8),
+      Expanded(
+        child: TextField(
+          controller: _searchController,
+          onChanged: _onSearchChanged,
+          style: const TextStyle(fontSize: 13, color: AppColors.textDark),
+          decoration: const InputDecoration(
+            hintText: 'Search appointments, clients or styles...',
+            hintStyle: TextStyle(fontSize: 13, color: AppColors.textGrey),
+            border: InputBorder.none,
+            isDense: true,
           ),
+        ),
+      ),
+    ],
+  ),
+),
           const Spacer(),
           const Icon(Icons.notifications_none_rounded, color: AppColors.textMid),
           const SizedBox(width: 16),
