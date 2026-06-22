@@ -9,6 +9,15 @@ class AnalyticsScreen extends StatefulWidget {
 }
 
 class _AnalyticsScreenState extends State<AnalyticsScreen> {
+  String _searchQuery = '';
+  final TextEditingController _searchController = TextEditingController();
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
   final List<Map<String, dynamic>> _services = [
     {'name': 'Braids & Twists', 'percent': 48, 'color': AppColors.primary},
     {'name': 'Nails & Pedicure', 'percent': 24, 'color': AppColors.accent},
@@ -34,10 +43,28 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
     },
   ];
 
-  final List<Map<String, dynamic>> _stylists = [
+  final List<Map<String, dynamic>> _allStylists = [
     {'name': 'Nakato Sarah', 'utilization': 0.95},
     {'name': 'Mukisa David', 'utilization': 0.88},
   ];
+
+  // Filter stylists by search query
+  List<Map<String, dynamic>> get _filteredStylists {
+    if (_searchQuery.isEmpty) return _allStylists;
+    final q = _searchQuery.toLowerCase();
+    return _allStylists
+        .where((s) => s['name'].toString().toLowerCase().contains(q))
+        .toList();
+  }
+
+  // Filter services by search query
+  List<Map<String, dynamic>> get _filteredServices {
+    if (_searchQuery.isEmpty) return _services;
+    final q = _searchQuery.toLowerCase();
+    return _services
+        .where((s) => s['name'].toString().toLowerCase().contains(q))
+        .toList();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -52,7 +79,6 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Header
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
@@ -81,8 +107,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
                             decoration: BoxDecoration(
                               color: AppColors.surface,
                               borderRadius: BorderRadius.circular(10),
-                              border:
-                                  Border.all(color: AppColors.outlineVariant),
+                              border: Border.all(color: AppColors.outlineVariant),
                             ),
                             child: const Row(
                               children: [
@@ -123,7 +148,6 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
                     ],
                   ),
                   const SizedBox(height: 24),
-                  // Stat cards
                   Row(
                     children: [
                       Expanded(
@@ -135,16 +159,13 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
                               AppColors.success)),
                       const SizedBox(width: 16),
                       Expanded(
-                          child: _statCard(
-                              'ACTIVE STYLISTS', '142', null, null)),
+                          child: _statCard('ACTIVE STYLISTS', '142', null, null)),
                       const SizedBox(width: 16),
                       Expanded(
-                          child: _statCard(
-                              'AVG. RATING', '98.2%', null, null)),
+                          child: _statCard('AVG. RATING', '98.2%', null, null)),
                     ],
                   ),
                   const SizedBox(height: 24),
-                  // Booking Density + Popular Services
                   Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -154,10 +175,8 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
                     ],
                   ),
                   const SizedBox(height: 24),
-                  // Retention & Loyalty Cohorts
                   _cohortsCard(),
                   const SizedBox(height: 24),
-                  // Top Stylist Efficiency + Peak Booking Times
                   Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -256,13 +275,14 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
                   style: AppTextStyles.headlineMd.copyWith(fontSize: 15)),
               Row(
                 children: [
-                  Text('Low', style: AppTextStyles.labelCaps.copyWith(fontSize: 9)),
+                  Text('Low',
+                      style: AppTextStyles.labelCaps.copyWith(fontSize: 9)),
                   const SizedBox(width: 4),
                   Container(
                     width: 40,
                     height: 6,
                     decoration: BoxDecoration(
-                      gradient: LinearGradient(colors: [
+                      gradient: const LinearGradient(colors: [
                         AppColors.surfaceContainer,
                         AppColors.primary,
                       ]),
@@ -270,7 +290,8 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
                     ),
                   ),
                   const SizedBox(width: 4),
-                  Text('High', style: AppTextStyles.labelCaps.copyWith(fontSize: 9)),
+                  Text('High',
+                      style: AppTextStyles.labelCaps.copyWith(fontSize: 9)),
                 ],
               ),
             ],
@@ -279,7 +300,6 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
           Text('Real-time demand map across city sectors',
               style: AppTextStyles.bodyMd.copyWith(fontSize: 12)),
           const SizedBox(height: 16),
-          // Heatmap grid
           GridView.builder(
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
@@ -310,6 +330,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
   }
 
   Widget _popularServicesCard() {
+    final services = _filteredServices;
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
@@ -327,11 +348,21 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
         children: [
           const Text('Popular Services',
               style: TextStyle(
-                  fontSize: 15, fontWeight: FontWeight.w700, color: Colors.white)),
+                  fontSize: 15,
+                  fontWeight: FontWeight.w700,
+                  color: Colors.white)),
           const Text('Volume share by category',
               style: TextStyle(fontSize: 11, color: Color(0xFFD4BCFA))),
           const SizedBox(height: 20),
-          ..._services.map((s) => _serviceBar(s)),
+          if (services.isEmpty)
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 16),
+              child: Text('No services match "$_searchQuery"',
+                  style: const TextStyle(
+                      fontSize: 12, color: Color(0xFFD4BCFA))),
+            )
+          else
+            ...services.map((s) => _serviceBar(s)),
           const SizedBox(height: 8),
           Center(
             child: Icon(Icons.pie_chart_outline_rounded,
@@ -411,18 +442,33 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
             ],
           ),
           const SizedBox(height: 16),
-          // Header row
           Row(
             children: [
               const SizedBox(
-                  width: 130, child: Text('COHORT MONTH', style: TextStyle(fontSize: 9, fontWeight: FontWeight.w700, color: AppColors.textGrey))),
+                  width: 130,
+                  child: Text('COHORT MONTH',
+                      style: TextStyle(
+                          fontSize: 9,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.textGrey))),
               const SizedBox(
-                  width: 90, child: Text('NEW CUSTOMERS', style: TextStyle(fontSize: 9, fontWeight: FontWeight.w700, color: AppColors.textGrey))),
-              ...List.generate(6, (i) => Expanded(
-                child: Center(
-                  child: Text('M$i', style: const TextStyle(fontSize: 9, fontWeight: FontWeight.w700, color: AppColors.textGrey)),
-                ),
-              )),
+                  width: 90,
+                  child: Text('NEW CUSTOMERS',
+                      style: TextStyle(
+                          fontSize: 9,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.textGrey))),
+              ...List.generate(
+                  6,
+                  (i) => Expanded(
+                        child: Center(
+                          child: Text('M$i',
+                              style: const TextStyle(
+                                  fontSize: 9,
+                                  fontWeight: FontWeight.w700,
+                                  color: AppColors.textGrey)),
+                        ),
+                      )),
             ],
           ),
           const SizedBox(height: 8),
@@ -455,10 +501,13 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
           SizedBox(
               width: 130,
               child: Text(c['month'],
-                  style: AppTextStyles.bodyMd.copyWith(fontWeight: FontWeight.w600, color: AppColors.textDark))),
+                  style: AppTextStyles.bodyMd.copyWith(
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.textDark))),
           SizedBox(
               width: 90,
-              child: Text('${c['newCustomers']}', style: AppTextStyles.bodyMd)),
+              child:
+                  Text('${c['newCustomers']}', style: AppTextStyles.bodyMd)),
           ...values.map((v) => Expanded(
                 child: Center(
                   child: v == null
@@ -491,6 +540,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
   }
 
   Widget _topStylistEfficiencyCard() {
+    final stylists = _filteredStylists;
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
@@ -515,7 +565,21 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
             ],
           ),
           const SizedBox(height: 16),
-          ..._stylists.map((s) => _stylistEfficiencyRow(s)),
+          if (stylists.isEmpty)
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 8),
+              child: Row(
+                children: [
+                  Icon(Icons.search_off_rounded,
+                      color: AppColors.outlineVariant, size: 20),
+                  const SizedBox(width: 8),
+                  Text('No stylists match "$_searchQuery"',
+                      style: AppTextStyles.bodyMd),
+                ],
+              ),
+            )
+          else
+            ...stylists.map((s) => _stylistEfficiencyRow(s)),
         ],
       ),
     );
@@ -530,9 +594,16 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
             radius: 16,
             backgroundColor: AppColors.surfaceContainer,
             child: Text(
-                s['name'].toString().split(' ').map((e) => e[0]).take(2).join(),
+                s['name']
+                    .toString()
+                    .split(' ')
+                    .map((e) => e[0])
+                    .take(2)
+                    .join(),
                 style: const TextStyle(
-                    fontSize: 11, fontWeight: FontWeight.w700, color: AppColors.primary)),
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.primary)),
           ),
           const SizedBox(width: 10),
           Expanded(
@@ -541,7 +612,8 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
               children: [
                 Text(s['name'],
                     style: AppTextStyles.bodyMd.copyWith(
-                        fontWeight: FontWeight.w600, color: AppColors.textDark)),
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.textDark)),
                 const SizedBox(height: 4),
                 ClipRRect(
                   borderRadius: BorderRadius.circular(4),
@@ -549,7 +621,8 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
                     value: s['utilization'],
                     minHeight: 5,
                     backgroundColor: AppColors.surfaceContainer,
-                    valueColor: const AlwaysStoppedAnimation(AppColors.primary),
+                    valueColor:
+                        const AlwaysStoppedAnimation(AppColors.primary),
                   ),
                 ),
               ],
@@ -600,7 +673,8 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
                     ),
                     const SizedBox(height: 4),
                     Text('${hour}H',
-                        style: AppTextStyles.labelCaps.copyWith(fontSize: 8)),
+                        style:
+                            AppTextStyles.labelCaps.copyWith(fontSize: 8)),
                   ],
                 );
               }).toList(),
@@ -619,24 +693,50 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
       child: Row(
         children: [
           Container(
-            width: 560,
+            width: 260,
             height: 38,
+            padding: const EdgeInsets.symmetric(horizontal: 12),
             decoration: BoxDecoration(
               color: AppColors.surfaceContainerLow,
               borderRadius: BorderRadius.circular(20),
             ),
-            child: const Row(
+            child: Row(
               children: [
-                SizedBox(width: 12),
-                Icon(Icons.search, color: AppColors.textGrey, size: 18),
-                SizedBox(width: 8),
-                Text('Search analytics...',
-                    style: TextStyle(fontSize: 13, color: AppColors.textGrey)),
+                const Icon(Icons.search, color: AppColors.textGrey, size: 18),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: TextField(
+                    controller: _searchController,
+                    onChanged: (val) {
+                      setState(() => _searchQuery = val);
+                      debugPrint('Analytics search: $val');
+                    },
+                    style: const TextStyle(
+                        fontSize: 13, color: AppColors.textDark),
+                    decoration: const InputDecoration(
+                      hintText: 'Search stylists, services...',
+                      hintStyle: TextStyle(
+                          fontSize: 13, color: AppColors.textGrey),
+                      border: InputBorder.none,
+                      isDense: true,
+                    ),
+                  ),
+                ),
+                if (_searchQuery.isNotEmpty)
+                  GestureDetector(
+                    onTap: () {
+                      _searchController.clear();
+                      setState(() => _searchQuery = '');
+                    },
+                    child: const Icon(Icons.close,
+                        size: 16, color: AppColors.textGrey),
+                  ),
               ],
             ),
           ),
           const Spacer(),
-          const Icon(Icons.notifications_none_rounded, color: AppColors.textMid),
+          const Icon(Icons.notifications_none_rounded,
+              color: AppColors.textMid),
           const SizedBox(width: 16),
           const Icon(Icons.access_time_rounded, color: AppColors.textMid),
           const SizedBox(width: 16),
@@ -647,7 +747,8 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
               CircleAvatar(
                 radius: 16,
                 backgroundColor: AppColors.surfaceContainer,
-                child: const Icon(Icons.person, color: AppColors.primary, size: 18),
+                child: const Icon(Icons.person,
+                    color: AppColors.primary, size: 18),
               ),
               const SizedBox(width: 8),
               const Column(
@@ -660,7 +761,8 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
                           fontWeight: FontWeight.w600,
                           color: AppColors.textDark)),
                   Text('Salon Manager',
-                      style: TextStyle(fontSize: 11, color: AppColors.textGrey)),
+                      style: TextStyle(
+                          fontSize: 11, color: AppColors.textGrey)),
                 ],
               ),
             ],
