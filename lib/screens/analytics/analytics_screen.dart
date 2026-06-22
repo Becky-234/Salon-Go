@@ -693,7 +693,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
       child: Row(
         children: [
           Container(
-            width: 260,
+            width: 560,
             height: 38,
             padding: const EdgeInsets.symmetric(horizontal: 12),
             decoration: BoxDecoration(
