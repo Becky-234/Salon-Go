@@ -9,7 +9,16 @@ class StylistsScreen extends StatefulWidget {
 }
 
 class _StylistsScreenState extends State<StylistsScreen> {
-  final List<Map<String, dynamic>> _stylists = [
+  String _searchQuery = '';
+  final TextEditingController _searchController = TextEditingController();
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  final List<Map<String, dynamic>> _allStylists = [
     {
       'name': 'Zahara Namono',
       'specialty': 'Artist: Briston',
@@ -44,8 +53,19 @@ class _StylistsScreenState extends State<StylistsScreen> {
     },
   ];
 
+  List<Map<String, dynamic>> get _filteredStylists {
+    if (_searchQuery.isEmpty) return _allStylists;
+    final q = _searchQuery.toLowerCase();
+    return _allStylists.where((s) {
+      return s['name'].toString().toLowerCase().contains(q) ||
+          s['specialty'].toString().toLowerCase().contains(q);
+    }).toList();
+  }
+
   @override
   Widget build(BuildContext context) {
+    final stylists = _filteredStylists;
+
     return Scaffold(
       backgroundColor: AppColors.background,
       body: Column(
@@ -136,20 +156,38 @@ class _StylistsScreenState extends State<StylistsScreen> {
                     ],
                   ),
                   const SizedBox(height: 24),
-            LayoutBuilder(
-                  builder: (context, constraints) {
-                    final cardWidth = (constraints.maxWidth - 32) / 3;
-                    return Wrap(
-                      spacing: 16,
-                      runSpacing: 16,
-                      children: [
-                        ..._stylists.map(
-                            (s) => SizedBox(width: cardWidth, child: _stylistCard(s))),
-                        SizedBox(width: cardWidth, child: _onboardSlotCard()),
-                      ],
-                    );
-                  },
-                ),
+                  if (stylists.isEmpty)
+                    Center(
+                      child: Padding(
+                        padding: const EdgeInsets.all(40),
+                        child: Column(
+                          children: [
+                            Icon(Icons.search_off_rounded,
+                                color: AppColors.outlineVariant, size: 40),
+                            const SizedBox(height: 12),
+                            Text('No stylists match "$_searchQuery"',
+                                style: AppTextStyles.bodyMd),
+                          ],
+                        ),
+                      ),
+                    )
+                  else
+                    LayoutBuilder(
+                      builder: (context, constraints) {
+                        final cardWidth = (constraints.maxWidth - 32) / 3;
+                        return Wrap(
+                          spacing: 16,
+                          runSpacing: 16,
+                          children: [
+                            ...stylists.map((s) =>
+                                SizedBox(width: cardWidth, child: _stylistCard(s))),
+                            if (_searchQuery.isEmpty)
+                              SizedBox(
+                                  width: cardWidth, child: _onboardSlotCard()),
+                          ],
+                        );
+                      },
+                    ),
                 ],
               ),
             ),
@@ -206,20 +244,20 @@ class _StylistsScreenState extends State<StylistsScreen> {
     );
   }
 
-Widget _activeNowCard() {
-  return Container(
-    padding: const EdgeInsets.all(20),
-    decoration: BoxDecoration(
-      color: AppColors.surfaceContainerLow,
-      borderRadius: BorderRadius.circular(16),
-      boxShadow: [
-        BoxShadow(
-          color: AppColors.primary.withOpacity(0.06),
-          blurRadius: 24,
-          offset: const Offset(0, 4),
-        ),
-      ],
-    ),
+  Widget _activeNowCard() {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: AppColors.surfaceContainerLow,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.primary.withOpacity(0.06),
+            blurRadius: 24,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -475,35 +513,34 @@ Widget _activeNowCard() {
         color: AppColors.outlineVariant,
         radius: 16,
       ),
-      child: Center(
-        child: Padding(
-          padding: const EdgeInsets.all(20),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Container(
-                width: 48,
-                height: 48,
-                decoration: const BoxDecoration(
-                  color: AppColors.surfaceContainer,
-                  shape: BoxShape.circle,
-                ),
-                child: const Icon(Icons.person_add_alt_outlined,
-                    color: AppColors.primary, size: 26),
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              width: 48,
+              height: 48,
+              decoration: const BoxDecoration(
+                color: AppColors.surfaceContainer,
+                shape: BoxShape.circle,
               ),
-              const SizedBox(height: 12),
-              const Text('Onboard New\nTalent',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w700,
-                      color: AppColors.textDark)),
-              const SizedBox(height: 8),
-              Text('Grow your fleet by adding\ncertified professionals.',
-                  textAlign: TextAlign.center,
-                  style: AppTextStyles.bodyMd.copyWith(fontSize: 15)),
-            ],
-          ),
+              child: const Icon(Icons.person_add_alt_outlined,
+                  color: AppColors.primary, size: 22),
+            ),
+            const SizedBox(height: 12),
+            const Text('Onboard New\nTalent',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.textDark)),
+            const SizedBox(height: 6),
+            Text('Grow your fleet by adding certified professionals.',
+                textAlign: TextAlign.center,
+                style: AppTextStyles.bodyMd.copyWith(fontSize: 11)),
+          ],
         ),
       ),
     );
@@ -519,17 +556,42 @@ Widget _activeNowCard() {
           Container(
             width: 560,
             height: 38,
+            padding: const EdgeInsets.symmetric(horizontal: 12),
             decoration: BoxDecoration(
               color: AppColors.surfaceContainerLow,
               borderRadius: BorderRadius.circular(20),
             ),
-            child: const Row(
+            child: Row(
               children: [
-                SizedBox(width: 12),
-                Icon(Icons.search, color: AppColors.textGrey, size: 18),
-                SizedBox(width: 8),
-                Text('Search stylists or specialties...',
-                    style: TextStyle(fontSize: 13, color: AppColors.textGrey)),
+                const Icon(Icons.search, color: AppColors.textGrey, size: 18),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: TextField(
+                    controller: _searchController,
+                    onChanged: (val) {
+                      setState(() => _searchQuery = val);
+                      debugPrint('Stylist search: $val');
+                    },
+                    style: const TextStyle(
+                        fontSize: 13, color: AppColors.textDark),
+                    decoration: const InputDecoration(
+                      hintText: 'Search stylists or specialties...',
+                      hintStyle:
+                          TextStyle(fontSize: 13, color: AppColors.textGrey),
+                      border: InputBorder.none,
+                      isDense: true,
+                    ),
+                  ),
+                ),
+                if (_searchQuery.isNotEmpty)
+                  GestureDetector(
+                    onTap: () {
+                      _searchController.clear();
+                      setState(() => _searchQuery = '');
+                    },
+                    child: const Icon(Icons.close,
+                        size: 16, color: AppColors.textGrey),
+                  ),
               ],
             ),
           ),
