@@ -11,8 +11,16 @@ class BookingsScreen extends StatefulWidget {
 class _BookingsScreenState extends State<BookingsScreen> {
   String _selectedStatus = 'All Statuses';
   String _selectedStylist = 'All Stylists';
+  String _searchQuery = '';
+  final TextEditingController _searchController = TextEditingController();
 
-  final List<Map<String, dynamic>> _bookings = [
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  final List<Map<String, dynamic>> _allBookings = [
     {
       'id': '#SG-9281',
       'initials': 'ZN',
@@ -71,6 +79,30 @@ class _BookingsScreenState extends State<BookingsScreen> {
     },
   ];
 
+  // Computed filtered list
+  List<Map<String, dynamic>> get _filteredBookings {
+    return _allBookings.where((b) {
+      // Search filter
+      final q = _searchQuery.toLowerCase();
+      final matchesSearch = q.isEmpty ||
+          b['customer'].toString().toLowerCase().contains(q) ||
+          b['id'].toString().toLowerCase().contains(q) ||
+          b['service'].toString().toLowerCase().contains(q) ||
+          b['stylist'].toString().toLowerCase().contains(q);
+
+      // Status filter
+      final matchesStatus = _selectedStatus == 'All Statuses' ||
+          b['status'].toString().toLowerCase() ==
+              _selectedStatus.toLowerCase();
+
+      // Stylist filter
+      final matchesStylist = _selectedStylist == 'All Stylists' ||
+          b['stylist'].toString() == _selectedStylist;
+
+      return matchesSearch && matchesStatus && matchesStylist;
+    }).toList();
+  }
+
   Color _statusColor(String status) {
     switch (status) {
       case 'CONFIRMED':
@@ -86,6 +118,8 @@ class _BookingsScreenState extends State<BookingsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final bookings = _filteredBookings;
+
     return Scaffold(
       backgroundColor: AppColors.background,
       body: Column(
@@ -97,7 +131,6 @@ class _BookingsScreenState extends State<BookingsScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Header with Export CSV only
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
@@ -115,11 +148,9 @@ class _BookingsScreenState extends State<BookingsScreen> {
                           Text(
                               'Efficiently manage and track all salon appointments.',
                               style: TextStyle(
-                                  fontSize: 13,
-                                  color: AppColors.textGrey)),
+                                  fontSize: 13, color: AppColors.textGrey)),
                         ],
                       ),
-                      // Export CSV button - Light purple background
                       Container(
                         padding: const EdgeInsets.symmetric(
                             horizontal: 16, vertical: 10),
@@ -145,7 +176,7 @@ class _BookingsScreenState extends State<BookingsScreen> {
                     ],
                   ),
                   const SizedBox(height: 24),
-                  // Filters row - With shadow, no border
+                  // Filters row
                   Container(
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
@@ -156,50 +187,52 @@ class _BookingsScreenState extends State<BookingsScreen> {
                           color: AppColors.primary.withOpacity(0.08),
                           blurRadius: 16,
                           offset: const Offset(0, 2),
-                          spreadRadius: 0,
                         ),
                       ],
                     ),
                     child: Row(
                       children: [
-                        // STATUS filter
                         Expanded(
-                          child: _filterDropdown('STATUS', _selectedStatus,
-                              ['All Statuses', 'Confirmed', 'Pending', 'Cancelled'],
-                              (val) => setState(() => _selectedStatus = val!)),
-                        ),
-                        const SizedBox(width: 16),
-                        // DATE RANGE filter
-                        Expanded(
-                          child: _dateFilter(),
-                        ),
-                        const SizedBox(width: 16),
-                        // STYLIST filter
-                        Expanded(
-                          child: _filterDropdown('STYLIST', _selectedStylist,
-                              ['All Stylists', 'Aisha M.', 'David O.', 'Sarah K.'],
-                              (val) => setState(() => _selectedStylist = val!)),
-                        ),
-                        const SizedBox(width: 16),
-                        // Apply Filters button
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 24, vertical: 12),
-                          decoration: BoxDecoration(
-                            color: AppColors.primary,
-                            borderRadius: BorderRadius.circular(10),
+                          child: _filterDropdown(
+                            'STATUS',
+                            _selectedStatus,
+                            ['All Statuses', 'CONFIRMED', 'PENDING', 'CANCELLED'],
+                            (val) => setState(() => _selectedStatus = val!),
                           ),
-                          child: const Row(
-                            children: [
-                              Icon(Icons.tune_rounded,
-                                  color: Colors.white, size: 16),
-                              SizedBox(width: 8),
-                              Text('Apply Filters',
-                                  style: TextStyle(
-                                      fontSize: 13,
-                                      fontWeight: FontWeight.w600,
-                                      color: Colors.white)),
-                            ],
+                        ),
+                        const SizedBox(width: 16),
+                        Expanded(child: _dateFilter()),
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: _filterDropdown(
+                            'STYLIST',
+                            _selectedStylist,
+                            ['All Stylists', 'Aisha M.', 'David O.', 'Sarah K.'],
+                            (val) => setState(() => _selectedStylist = val!),
+                          ),
+                        ),
+                        const SizedBox(width: 16),
+                        GestureDetector(
+                          onTap: () => setState(() {}),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 24, vertical: 12),
+                            decoration: BoxDecoration(
+                              color: AppColors.primary,
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            child: const Row(
+                              children: [
+                                Icon(Icons.tune_rounded,
+                                    color: Colors.white, size: 16),
+                                SizedBox(width: 8),
+                                Text('Apply Filters',
+                                    style: TextStyle(
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.w600,
+                                        color: Colors.white)),
+                              ],
+                            ),
                           ),
                         ),
                       ],
@@ -216,26 +249,24 @@ class _BookingsScreenState extends State<BookingsScreen> {
                           color: AppColors.primary.withOpacity(0.06),
                           blurRadius: 24,
                           offset: const Offset(0, 4),
-                          spreadRadius: 0,
                         ),
                       ],
                     ),
                     child: Column(
                       children: [
-                        // Table with horizontal scroll
                         SingleChildScrollView(
                           scrollDirection: Axis.horizontal,
                           child: SizedBox(
                             width: 1100,
                             child: Column(
                               children: [
-                                // Table header
+                                // Header
                                 Container(
                                   padding: const EdgeInsets.symmetric(
                                       horizontal: 20, vertical: 14),
-                                  decoration: BoxDecoration(
+                                  decoration: const BoxDecoration(
                                     color: AppColors.surfaceContainerLow,
-                                    borderRadius: const BorderRadius.only(
+                                    borderRadius: BorderRadius.only(
                                       topLeft: Radius.circular(16),
                                       topRight: Radius.circular(16),
                                     ),
@@ -253,14 +284,30 @@ class _BookingsScreenState extends State<BookingsScreen> {
                                     ],
                                   ),
                                 ),
-                                // Table rows
-                                ..._bookings.map((b) => _tableRow(b)),
+                                // Rows
+                                if (bookings.isEmpty)
+                                  Padding(
+                                    padding: const EdgeInsets.all(40),
+                                    child: Center(
+                                      child: Column(
+                                        children: [
+                                          Icon(Icons.search_off_rounded,
+                                              color: AppColors.outlineVariant,
+                                              size: 40),
+                                          const SizedBox(height: 12),
+                                          Text('No bookings match your search',
+                                              style: AppTextStyles.bodyMd),
+                                        ],
+                                      ),
+                                    ),
+                                  )
+                                else
+                                  ...bookings.map((b) => _tableRow(b)),
                               ],
                             ),
                           ),
                         ),
-                        // Pagination
-                        _pagination(),
+                        _pagination(bookings.length),
                       ],
                     ),
                   ),
@@ -277,8 +324,8 @@ class _BookingsScreenState extends State<BookingsScreen> {
     return SizedBox(
       width: width,
       child: Text(text,
-          style: AppTextStyles.labelCaps.copyWith(
-              fontSize: 11, color: AppColors.textGrey)),
+          style: AppTextStyles.labelCaps
+              .copyWith(fontSize: 11, color: AppColors.textGrey)),
     );
   }
 
@@ -292,14 +339,12 @@ class _BookingsScreenState extends State<BookingsScreen> {
       ),
       child: Row(
         children: [
-          // Booking ID
           SizedBox(
             width: 100,
             child: Text(b['id'],
                 style: AppTextStyles.bodyMd.copyWith(
                     fontWeight: FontWeight.w600, color: AppColors.textDark)),
           ),
-          // Customer
           SizedBox(
             width: 180,
             child: Row(
@@ -330,12 +375,10 @@ class _BookingsScreenState extends State<BookingsScreen> {
               ],
             ),
           ),
-          // Service
           SizedBox(
             width: 150,
             child: Container(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
               decoration: BoxDecoration(
                 color: (b['serviceColor'] as Color).withOpacity(0.1),
                 borderRadius: BorderRadius.circular(6),
@@ -348,7 +391,6 @@ class _BookingsScreenState extends State<BookingsScreen> {
                   overflow: TextOverflow.ellipsis),
             ),
           ),
-          // Stylist
           SizedBox(
             width: 120,
             child: Row(
@@ -371,20 +413,18 @@ class _BookingsScreenState extends State<BookingsScreen> {
               ],
             ),
           ),
-          // Date & Time
           SizedBox(
             width: 150,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(b['date'],
-                    style: AppTextStyles.bodyMd
-                        .copyWith(color: AppColors.textDark)),
+                    style:
+                        AppTextStyles.bodyMd.copyWith(color: AppColors.textDark)),
                 Text(b['time'], style: AppTextStyles.labelCaps),
               ],
             ),
           ),
-          // Status
           SizedBox(
             width: 110,
             child: Row(
@@ -406,23 +446,20 @@ class _BookingsScreenState extends State<BookingsScreen> {
               ],
             ),
           ),
-          // Amount
           SizedBox(
             width: 100,
             child: Text(b['amount'],
                 style: AppTextStyles.bodyMd.copyWith(
                     fontWeight: FontWeight.w600, color: AppColors.textDark)),
           ),
-          // Actions
           SizedBox(
             width: 80,
             child: Row(
-              children: [
-                const Icon(Icons.visibility_outlined,
+              children: const [
+                Icon(Icons.visibility_outlined,
                     size: 18, color: AppColors.textGrey),
-                const SizedBox(width: 8),
-                const Icon(Icons.edit_outlined,
-                    size: 18, color: AppColors.textGrey),
+                SizedBox(width: 8),
+                Icon(Icons.edit_outlined, size: 18, color: AppColors.textGrey),
               ],
             ),
           ),
@@ -451,9 +488,8 @@ class _BookingsScreenState extends State<BookingsScreen> {
               value: value,
               isExpanded: true,
               items: items
-                  .map((e) => DropdownMenuItem(
-                      value: e, 
-                      child: Text(e, style: AppTextStyles.bodyMd)))
+                  .map((e) =>
+                      DropdownMenuItem(value: e, child: Text(e, style: AppTextStyles.bodyMd)))
                   .toList(),
               onChanged: onChanged,
               icon: const Icon(Icons.keyboard_arrow_down_rounded,
@@ -470,7 +506,8 @@ class _BookingsScreenState extends State<BookingsScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('DATE RANGE', style: AppTextStyles.labelCaps.copyWith(fontSize: 10)),
+        Text('DATE RANGE',
+            style: AppTextStyles.labelCaps.copyWith(fontSize: 10)),
         const SizedBox(height: 4),
         Container(
           height: 40,
@@ -493,13 +530,13 @@ class _BookingsScreenState extends State<BookingsScreen> {
     );
   }
 
-  Widget _pagination() {
+  Widget _pagination(int count) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text('Showing 1 to 4 of 128 bookings',
+          Text('Showing $count of ${_allBookings.length} bookings',
               style: AppTextStyles.bodyMd.copyWith(fontSize: 12)),
           Row(
             children: [
@@ -561,37 +598,60 @@ class _BookingsScreenState extends State<BookingsScreen> {
           Container(
             width: 560,
             height: 38,
+            padding: const EdgeInsets.symmetric(horizontal: 12),
             decoration: BoxDecoration(
               color: AppColors.surfaceContainerLow,
               borderRadius: BorderRadius.circular(20),
             ),
-            child: const Row(
+            child: Row(
               children: [
-                SizedBox(width: 12),
-                Icon(Icons.search, color: AppColors.textGrey, size: 18),
-                SizedBox(width: 8),
-                Text('Search appointments, clients or styles...',
-                    style: TextStyle(fontSize: 13, color: AppColors.textGrey)),
+                const Icon(Icons.search, color: AppColors.textGrey, size: 18),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: TextField(
+                    controller: _searchController,
+                    onChanged: (val) {
+                      setState(() => _searchQuery = val);
+                      debugPrint('Search query: $val');
+                    },
+                    style: const TextStyle(
+                        fontSize: 13, color: AppColors.textDark),
+                    decoration: const InputDecoration(
+                      hintText: 'Search bookings, stylists or clients...',
+                      hintStyle:
+                          TextStyle(fontSize: 13, color: AppColors.textGrey),
+                      border: InputBorder.none,
+                      isDense: true,
+                    ),
+                  ),
+                ),
+                if (_searchQuery.isNotEmpty)
+                  GestureDetector(
+                    onTap: () {
+                      _searchController.clear();
+                      setState(() => _searchQuery = '');
+                    },
+                    child: const Icon(Icons.close,
+                        size: 16, color: AppColors.textGrey),
+                  ),
               ],
             ),
           ),
           const Spacer(),
-          const Icon(Icons.notifications_none_rounded, color: AppColors.textMid),
+          const Icon(Icons.notifications_none_rounded,
+              color: AppColors.textMid),
           const SizedBox(width: 16),
           const Icon(Icons.access_time_rounded, color: AppColors.textMid),
           const SizedBox(width: 16),
-          Container(
-            width: 1,
-            height: 28,
-            color: AppColors.outlineVariant,
-          ),
+          Container(width: 1, height: 28, color: AppColors.outlineVariant),
           const SizedBox(width: 16),
           Row(
             children: [
               CircleAvatar(
                 radius: 16,
                 backgroundColor: AppColors.surfaceContainer,
-                child: const Icon(Icons.person, color: AppColors.primary, size: 18),
+                child: const Icon(Icons.person,
+                    color: AppColors.primary, size: 18),
               ),
               const SizedBox(width: 8),
               const Column(
@@ -604,7 +664,8 @@ class _BookingsScreenState extends State<BookingsScreen> {
                           fontWeight: FontWeight.w600,
                           color: AppColors.textDark)),
                   Text('Salon Manager',
-                      style: TextStyle(fontSize: 11, color: AppColors.textGrey)),
+                      style:
+                          TextStyle(fontSize: 11, color: AppColors.textGrey)),
                 ],
               ),
             ],
