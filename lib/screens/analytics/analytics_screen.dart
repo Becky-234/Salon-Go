@@ -149,22 +149,48 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
                   ),
                   const SizedBox(height: 24),
                   Row(
-                    children: [
-                      Expanded(
-                          child: _statCard('TOTAL BOOKINGS', '2,845', '+12%',
-                              AppColors.success)),
-                      const SizedBox(width: 16),
-                      Expanded(
-                          child: _statCard('REVENUE (UGX)', '84.2M', '+8%',
-                              AppColors.success)),
-                      const SizedBox(width: 16),
-                      Expanded(
-                          child: _statCard('ACTIVE STYLISTS', '142', null, null)),
-                      const SizedBox(width: 16),
-                      Expanded(
-                          child: _statCard('AVG. RATING', '98.2%', null, null)),
-                    ],
-                  ),
+  children: [
+    Expanded(
+      child: _statCard(
+        'TOTAL BOOKINGS',
+        '2,845',
+        '+14%',
+        AppColors.accent,
+        Icons.calendar_today_outlined,
+      ),
+    ),
+    const SizedBox(width: 16),
+    Expanded(
+      child: _statCard(
+        'REVENUE (UGX)',
+        '84.2M',
+        '+13%',
+        AppColors.accent,
+        Icons.payments_outlined,
+      ),
+    ),
+    const SizedBox(width: 16),
+    Expanded(
+      child: _statCard(
+        'ACTIVE STYLISTS',
+        '142',
+        '-21%',
+        AppColors.error,
+        Icons.content_cut_outlined,
+      ),
+    ),
+    const SizedBox(width: 16),
+    Expanded(
+      child: _statCard(
+        'AVG. RATING',
+        '98.2%',
+        null,
+        null,
+        Icons.star_outline_rounded,
+      ),
+    ),
+  ],
+),
                   const SizedBox(height: 24),
                   Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -194,65 +220,68 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
     );
   }
 
-  Widget _statCard(
-      String label, String value, String? badge, Color? badgeColor) {
-    return Container(
-      padding: const EdgeInsets.all(18),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: const [
-          BoxShadow(
-              color: AppColors.shadow, blurRadius: 24, offset: Offset(0, 4)),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Container(
-                width: 36,
-                height: 36,
-                decoration: BoxDecoration(
-                  color: AppColors.surfaceContainer,
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: const Icon(Icons.bar_chart_rounded,
-                    color: AppColors.primary, size: 18),
+Widget _statCard(
+    String label, String value, String? badge, Color? badgeColor, IconData icon) {
+  return Container(
+    padding: const EdgeInsets.all(18),
+    decoration: BoxDecoration(
+      color: AppColors.surface,
+      borderRadius: BorderRadius.circular(16),
+      boxShadow: const [
+        BoxShadow(
+            color: AppColors.shadow, blurRadius: 24, offset: Offset(0, 4)),
+      ],
+    ),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: AppColors.surfaceContainer,
+                borderRadius: BorderRadius.circular(12),
               ),
-              if (badge != null)
-                Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                  decoration: BoxDecoration(
-                    color: (badgeColor ?? AppColors.success).withOpacity(0.12),
-                    borderRadius: BorderRadius.circular(20),
+              child: Icon(icon, color: AppColors.primary, size: 20),
+            ),
+            if (badge != null)
+              Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                decoration: BoxDecoration(
+                  color: (badgeColor ?? AppColors.accent).withOpacity(0.12),
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(
+                    color: badgeColor ?? AppColors.accent,
+                    width: 1.2,
                   ),
-                  child: Text(badge,
-                      style: TextStyle(
-                          fontSize: 10,
-                          fontWeight: FontWeight.w600,
-                          color: badgeColor ?? AppColors.success)),
                 ),
-            ],
-          ),
-          const SizedBox(height: 14),
-          Text(label.toUpperCase(),
-              style: AppTextStyles.labelCaps
-                  .copyWith(fontSize: 10, color: AppColors.textGrey)),
-          const SizedBox(height: 4),
-          Text(value,
-              style: const TextStyle(
-                  fontFamily: 'Montserrat',
-                  fontSize: 20,
-                  fontWeight: FontWeight.w700,
-                  color: AppColors.textDark)),
-        ],
-      ),
-    );
-  }
+                child: Text(badge,
+                    style: TextStyle(
+                        fontSize: 10,
+                        fontWeight: FontWeight.w600,
+                        color: badgeColor ?? AppColors.accent)),
+              ),
+          ],
+        ),
+        const SizedBox(height: 14),
+        Text(label.toUpperCase(),
+            style: AppTextStyles.labelCaps
+                .copyWith(fontSize: 10, color: AppColors.textDark)),
+        const SizedBox(height: 4),
+        Text(value,
+            style: const TextStyle(
+                fontFamily: 'Montserrat',
+                fontSize: 20,
+                fontWeight: FontWeight.w700,
+                color: AppColors.primary)),
+      ],
+    ),
+  );
+}
 
   Widget _bookingDensityCard() {
     return Container(
