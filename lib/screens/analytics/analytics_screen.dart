@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:saloon_go/core/theme.dart';
+import 'dart:math' as math;
 
 class AnalyticsScreen extends StatefulWidget {
   const AnalyticsScreen({super.key});
@@ -195,9 +196,9 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
                   Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Expanded(flex: 3, child: _bookingDensityCard()),
+                      Expanded(flex: 7, child: _bookingDensityCard()),
                       const SizedBox(width: 16),
-                      Expanded(flex: 2, child: _popularServicesCard()),
+                      Expanded(flex: 3, child: _popularServicesCard()),
                     ],
                   ),
                   const SizedBox(height: 24),
@@ -283,53 +284,74 @@ Widget _statCard(
   );
 }
 
-  Widget _bookingDensityCard() {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: const [
-          BoxShadow(
-              color: AppColors.shadow, blurRadius: 24, offset: Offset(0, 4)),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text('Booking Density: Kampala',
-                  style: AppTextStyles.headlineMd.copyWith(fontSize: 15)),
-              Row(
-                children: [
-                  Text('Low',
-                      style: AppTextStyles.labelCaps.copyWith(fontSize: 9)),
-                  const SizedBox(width: 4),
-                  Container(
-                    width: 40,
-                    height: 6,
-                    decoration: BoxDecoration(
-                      gradient: const LinearGradient(colors: [
-                        AppColors.surfaceContainer,
-                        AppColors.primary,
-                      ]),
-                      borderRadius: BorderRadius.circular(4),
-                    ),
+Widget _bookingDensityCard() {
+  return Container(
+    padding: const EdgeInsets.all(20),
+    decoration: BoxDecoration(
+      color: AppColors.surface,
+      borderRadius: BorderRadius.circular(16),
+      boxShadow: const [
+        BoxShadow(color: AppColors.shadow, blurRadius: 24, offset: Offset(0, 4)),
+      ],
+    ),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('Booking Density: Kampala',
+                    style: AppTextStyles.headlineMd.copyWith(fontSize: 15)),
+                Text('Real-time demand map across city sectors',
+                    style: AppTextStyles.bodyMd.copyWith(fontSize: 12)),
+              ],
+            ),
+            // Two separate boxes for Low and High
+            Row(
+              children: [
+                Container(
+                  width: 28,
+                  height: 28,
+                  decoration: BoxDecoration(
+                    color: AppColors.surfaceContainer,
+                    borderRadius: BorderRadius.circular(6),
                   ),
-                  const SizedBox(width: 4),
-                  Text('High',
-                      style: AppTextStyles.labelCaps.copyWith(fontSize: 9)),
-                ],
-              ),
-            ],
+                  child: Center(
+                    child: Text('L',
+                        style: AppTextStyles.labelCaps.copyWith(
+                            fontSize: 9, color: AppColors.textGrey)),
+                  ),
+                ),
+                const SizedBox(width: 6),
+                Container(
+                  width: 28,
+                  height: 28,
+                  decoration: BoxDecoration(
+                    color: AppColors.primary,
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  child: Center(
+                    child: Text('H',
+                        style: AppTextStyles.labelCaps
+                            .copyWith(fontSize: 9, color: Colors.white)),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+        const SizedBox(height: 16),
+        // Heatmap grid
+        Container(
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: AppColors.surfaceContainerLow,
+            borderRadius: BorderRadius.circular(12),
           ),
-          const SizedBox(height: 4),
-          Text('Real-time demand map across city sectors',
-              style: AppTextStyles.bodyMd.copyWith(fontSize: 12)),
-          const SizedBox(height: 16),
-          GridView.builder(
+          child: GridView.builder(
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
             gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
@@ -342,98 +364,116 @@ Widget _statCard(
               final intensity = (index * 37) % 100 / 100;
               return Container(
                 decoration: BoxDecoration(
-                  color: AppColors.primary.withOpacity(0.15 + intensity * 0.7),
+                  color: AppColors.primary.withOpacity(0.1 + intensity * 0.75),
                   borderRadius: BorderRadius.circular(6),
                 ),
               );
             },
           ),
-          const SizedBox(height: 12),
-          Center(
-            child: Icon(Icons.map_outlined,
-                color: AppColors.outlineVariant, size: 28),
-          ),
-        ],
-      ),
-    );
-  }
+        ),
+        const SizedBox(height: 16),
+        // map icon
+        Center(
+          child: Icon(Icons.map_outlined,
+              color: AppColors.outlineVariant, size: 64),
+        ),
+      ],
+    ),
+  );
+}
 
-  Widget _popularServicesCard() {
-    final services = _filteredServices;
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: AppColors.primary,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-              color: AppColors.primary.withOpacity(0.2),
-              blurRadius: 24,
-              offset: const Offset(0, 4)),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text('Popular Services',
-              style: TextStyle(
-                  fontSize: 15,
-                  fontWeight: FontWeight.w700,
-                  color: Colors.white)),
-          const Text('Volume share by category',
-              style: TextStyle(fontSize: 11, color: Color(0xFFD4BCFA))),
-          const SizedBox(height: 20),
-          if (services.isEmpty)
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: 16),
-              child: Text('No services match "$_searchQuery"',
-                  style: const TextStyle(
-                      fontSize: 12, color: Color(0xFFD4BCFA))),
-            )
-          else
-            ...services.map((s) => _serviceBar(s)),
-          const SizedBox(height: 8),
-          Center(
-            child: Icon(Icons.pie_chart_outline_rounded,
-                color: Colors.white.withOpacity(0.3), size: 40),
-          ),
-        ],
-      ),
-    );
-  }
+Widget _popularServicesCard() {
+  final services = _filteredServices;
+  return Container(
+    padding: const EdgeInsets.all(20),
+    decoration: BoxDecoration(
+      color: AppColors.primary,
+      borderRadius: BorderRadius.circular(16),
+      boxShadow: [
+        BoxShadow(
+            color: AppColors.primary.withOpacity(0.2),
+            blurRadius: 24,
+            offset: const Offset(0, 4)),
+      ],
+    ),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text('Popular Services',
+            style: TextStyle(
+                fontFamily: 'Montserrat',
+                fontSize: 15,
+                fontWeight: FontWeight.w700,
+                color: Colors.white)),
+        const Text('Volume share by category',
+            style: TextStyle(fontSize: 11, color: Color(0xFFD4BCFA))),
+        const SizedBox(height: 20),
+        if (services.isEmpty)
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 16),
+            child: Text('No services match "$_searchQuery"',
+                style: const TextStyle(
+                    fontSize: 12, color: Color(0xFFD4BCFA))),
+          )
+        else
+          ...services.map((s) => _serviceBar(s)),
+        const SizedBox(height: 12),
+        // Sun illustration circle
+        CustomPaint(
+          size: const Size(60, 60),
+          painter: _SunPainter(),
+        ),
+      ],
+    ),
+  );
+}
 
-  Widget _serviceBar(Map<String, dynamic> s) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 14),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(s['name'],
-                  style: const TextStyle(fontSize: 12, color: Colors.white)),
-              Text('${s['percent']}%',
-                  style: const TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w700,
-                      color: Colors.white)),
-            ],
-          ),
-          const SizedBox(height: 6),
-          ClipRRect(
-            borderRadius: BorderRadius.circular(4),
-            child: LinearProgressIndicator(
-              value: s['percent'] / 100,
-              minHeight: 6,
-              backgroundColor: Colors.white.withOpacity(0.15),
-              valueColor: AlwaysStoppedAnimation(s['color'] as Color),
+Widget _serviceBar(Map<String, dynamic> s) {
+  final percent = s['percent'] as int;
+  // Gold brightness scales with percentage
+  final goldOpacity = 0.4 + (percent / 100) * 0.6;
+  final goldColor = Color.lerp(
+    const Color(0xFFF5A623).withOpacity(0.4),
+    const Color(0xFFF5A623),
+    percent / 48.0,
+  )!;
+
+  return Padding(
+    padding: const EdgeInsets.only(bottom: 16),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(s['name'],
+            style: const TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: Colors.white)),
+        const SizedBox(height: 6),
+        Row(
+          children: [
+            Expanded(
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(4),
+                child: LinearProgressIndicator(
+                  value: percent / 100,
+                  minHeight: 6,
+                  backgroundColor: Colors.white.withOpacity(0.15),
+                  valueColor: AlwaysStoppedAnimation(goldColor),
+                ),
+              ),
             ),
-          ),
-        ],
-      ),
-    );
-  }
+            const SizedBox(width: 10),
+            Text('$percent%',
+                style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                    color: Colors.white.withOpacity(goldOpacity))),
+          ],
+        ),
+      ],
+    ),
+  );
+}
 
   Widget _cohortsCard() {
     return Container(
@@ -800,4 +840,53 @@ Widget _statCard(
       ),
     );
   }
+}
+
+
+class _SunPainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = Colors.white.withOpacity(0.25)
+      ..strokeWidth = 2.5
+      ..style = PaintingStyle.stroke
+      ..strokeCap = StrokeCap.round;
+
+    final center = Offset(size.width / 2, size.height / 2);
+    final radius = size.width * 0.22;
+
+    // Circle
+    canvas.drawCircle(center, radius, paint);
+
+    // Radiating lines of varying length
+    final lineLengths = [8.0, 12.0, 6.0, 14.0, 9.0, 13.0, 7.0, 11.0];
+    final count = lineLengths.length;
+    for (int i = 0; i < count; i++) {
+      final angle = (i * 2 * 3.14159) / count;
+      final start = Offset(
+        center.dx + (radius + 4) * cos(angle),
+        center.dy + (radius + 4) * sin(angle),
+      );
+      final end = Offset(
+        center.dx + (radius + 4 + lineLengths[i]) * cos(angle),
+        center.dy + (radius + 4 + lineLengths[i]) * sin(angle),
+      );
+      canvas.drawLine(start, end, paint);
+    }
+  }
+
+  double cos(double angle) => _cos(angle);
+  double sin(double angle) => _sin(angle);
+
+  double _cos(double x) {
+    // Use dart:math
+    return math.cos(x);
+  }
+
+  double _sin(double x) {
+    return math.sin(x);
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
