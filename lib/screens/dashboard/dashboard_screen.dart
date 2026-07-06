@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:saloon_go/core/theme.dart';
-import 'package:saloon_go/data/mock_data.dart';
+import 'package:saloon_go/models/inventory_item.dart';
+import 'package:saloon_go/repositories/inventory_repository.dart';
 import 'package:saloon_go/widgets/earnings_chart.dart';
 import 'package:saloon_go/widgets/recent_activity.dart';
 import 'package:saloon_go/widgets/stat_card.dart';
@@ -14,8 +15,15 @@ class DashboardScreen extends StatefulWidget {
 }
 
 class _DashboardScreenState extends State<DashboardScreen> {
-  // REMOVED: int _selectedIndex = 0; - Now managed by parent
-   final TextEditingController _searchController = TextEditingController();
+  final TextEditingController _searchController = TextEditingController();
+  final InventoryRepository _inventoryRepository = InventoryRepository();
+  late Future<List<InventoryItem>> _inventoryFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _inventoryFuture = _inventoryRepository.fetchLowStockItems();
+  }
 
   void _onSearchChanged(String query) {
     print('Search query: $query');
@@ -127,34 +135,34 @@ class _DashboardScreenState extends State<DashboardScreen> {
       color: AppColors.surface,
       child: Row(
         children: [
-     Container(
-  width: 560,
-  height: 38,
-  padding: const EdgeInsets.symmetric(horizontal: 12),
-  decoration: BoxDecoration(
-    color: AppColors.surfaceContainerLow,
-    borderRadius: BorderRadius.circular(20),
-  ),
-  child: Row(
-    children: [
-      const Icon(Icons.search, color: AppColors.textGrey, size: 18),
-      const SizedBox(width: 8),
-      Expanded(
-        child: TextField(
-          controller: _searchController,
-          onChanged: _onSearchChanged,
-          style: const TextStyle(fontSize: 13, color: AppColors.textDark),
-          decoration: const InputDecoration(
-            hintText: 'Search appointments, clients or styles...',
-            hintStyle: TextStyle(fontSize: 13, color: AppColors.textGrey),
-            border: InputBorder.none,
-            isDense: true,
+          Container(
+            width: 560,
+            height: 38,
+            padding: const EdgeInsets.symmetric(horizontal: 12),
+            decoration: BoxDecoration(
+              color: AppColors.surfaceContainerLow,
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: Row(
+              children: [
+                const Icon(Icons.search, color: AppColors.textGrey, size: 18),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: TextField(
+                    controller: _searchController,
+                    onChanged: _onSearchChanged,
+                    style: const TextStyle(fontSize: 13, color: AppColors.textDark),
+                    decoration: const InputDecoration(
+                      hintText: 'Search appointments, clients or styles...',
+                      hintStyle: TextStyle(fontSize: 13, color: AppColors.textGrey),
+                      border: InputBorder.none,
+                      isDense: true,
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
-        ),
-      ),
-    ],
-  ),
-),
           const Spacer(),
           const Icon(Icons.notifications_none_rounded, color: AppColors.textMid),
           const SizedBox(width: 16),
@@ -212,12 +220,54 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   style: AppTextStyles.headlineMd.copyWith(
                       fontSize: 14, color: Colors.white)),
               const SizedBox(height: 8),
-              const Text(
-                '3 hair care products are running low. Orders should be placed within 48 hours to avoid service delays.',
-                style: TextStyle(fontSize: 12, color: Color(0xFFD4BCFA)),
+              // Body driven by the repository via FutureBuilder
+              FutureBuilder<List<InventoryItem>>(
+                future: _inventoryFuture,
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return const Padding(
+                      padding: EdgeInsets.symmetric(vertical: 24),
+                      child: Center(
+                        child: CircularProgressIndicator(color: AppColors.accent),
+                      ),
+                    );
+                  }
+
+                  if (snapshot.hasError) {
+                    return Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      child: Text(
+                        'Could not load inventory: ${snapshot.error}',
+                        style: const TextStyle(fontSize: 12, color: Color(0xFFD4BCFA)),
+                      ),
+                    );
+                  }
+
+                  final items = snapshot.data ?? [];
+
+                  if (items.isEmpty) {
+                    return const Padding(
+                      padding: EdgeInsets.symmetric(vertical: 16),
+                      child: Text(
+                        'All stock levels look healthy.',
+                        style: TextStyle(fontSize: 12, color: Color(0xFFD4BCFA)),
+                      ),
+                    );
+                  }
+
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        '${items.length} hair care products are running low. Orders should be placed within 48 hours to avoid service delays.',
+                        style: const TextStyle(fontSize: 12, color: Color(0xFFD4BCFA)),
+                      ),
+                      const SizedBox(height: 16),
+                      ...items.map((item) => _inventoryRow(item)),
+                    ],
+                  );
+                },
               ),
-              const SizedBox(height: 16),
-              ...MockData.inventoryAlerts.map((item) => _inventoryRow(item)),
               const SizedBox(height: 16),
               Container(
                 width: double.infinity,
@@ -256,9 +306,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
-  Widget _inventoryRow(Map<String, dynamic> item) {
-    final int units = item['units'] as int;
-    final bool isEmpty = units == 0;
+  Widget _inventoryRow(InventoryItem item) {
+    final bool isEmpty = item.units == 0;
     return Padding(
       padding: const EdgeInsets.only(bottom: 10),
       child: Container(
@@ -271,7 +320,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Expanded(
-              child: Text(item['name'],
+              child: Text(item.name,
                   style: const TextStyle(fontSize: 13, color: Colors.white)),
             ),
             Container(
@@ -284,7 +333,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     : Border.all(color: AppColors.accent, width: 1.2),
               ),
               child: Text(
-                isEmpty ? '0 UNITS LEFT' : '$units UNITS LEFT',
+                isEmpty ? '0 UNITS LEFT' : '${item.units} UNITS LEFT',
                 style: TextStyle(
                     fontSize: 10,
                     fontWeight: FontWeight.w700,

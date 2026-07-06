@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:saloon_go/core/theme.dart';
 import 'dart:math' as math;
+import 'package:saloon_go/models/cohort_month.dart';
+import 'package:saloon_go/models/service_stat.dart';
+import 'package:saloon_go/models/stylist_efficiency.dart';
+import 'package:saloon_go/repositories/analytics_repository.dart';
 
 class AnalyticsScreen extends StatefulWidget {
   const AnalyticsScreen({super.key});
@@ -10,8 +14,22 @@ class AnalyticsScreen extends StatefulWidget {
 }
 
 class _AnalyticsScreenState extends State<AnalyticsScreen> {
+  final AnalyticsRepository _repository = AnalyticsRepository();
+
   String _searchQuery = '';
   final TextEditingController _searchController = TextEditingController();
+
+  late Future<List<ServiceStat>> _servicesFuture;
+  late Future<List<StylistEfficiency>> _stylistsFuture;
+  late Future<List<CohortMonth>> _cohortsFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadFiltered();
+    // Cohorts aren't affected by the search box, so load them once.
+    _cohortsFuture = _repository.fetchCohorts();
+  }
 
   @override
   void dispose() {
@@ -19,52 +37,12 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
     super.dispose();
   }
 
-  final List<Map<String, dynamic>> _services = [
-    {'name': 'Braids & Twists', 'percent': 48, 'color': AppColors.primary},
-    {'name': 'Nails & Pedicure', 'percent': 24, 'color': AppColors.accent},
-    {'name': 'Bridal Makeup', 'percent': 18, 'color': AppColors.primaryContainer},
-    {'name': 'Facials & Spa', 'percent': 10, 'color': AppColors.success},
-  ];
-
-  final List<Map<String, dynamic>> _cohorts = [
-    {
-      'month': 'January 2024',
-      'newCustomers': 420,
-      'values': [100, 78, 65, 52, 28, 41]
-    },
-    {
-      'month': 'February 2024',
-      'newCustomers': 512,
-      'values': [100, 82, 68, 55, 48, null]
-    },
-    {
-      'month': 'March 2024',
-      'newCustomers': 488,
-      'values': [100, 75, 60, null, null, null]
-    },
-  ];
-
-  final List<Map<String, dynamic>> _allStylists = [
-    {'name': 'Nakato Sarah', 'utilization': 0.95},
-    {'name': 'Mukisa David', 'utilization': 0.88},
-  ];
-
-  // Filter stylists by search query
-  List<Map<String, dynamic>> get _filteredStylists {
-    if (_searchQuery.isEmpty) return _allStylists;
-    final q = _searchQuery.toLowerCase();
-    return _allStylists
-        .where((s) => s['name'].toString().toLowerCase().contains(q))
-        .toList();
-  }
-
-  // Filter services by search query
-  List<Map<String, dynamic>> get _filteredServices {
-    if (_searchQuery.isEmpty) return _services;
-    final q = _searchQuery.toLowerCase();
-    return _services
-        .where((s) => s['name'].toString().toLowerCase().contains(q))
-        .toList();
+  void _loadFiltered() {
+    setState(() {
+      _servicesFuture = _repository.fetchFilteredServices(query: _searchQuery);
+      _stylistsFuture =
+          _repository.fetchFilteredStylistEfficiency(query: _searchQuery);
+    });
   }
 
   @override
@@ -150,48 +128,48 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
                   ),
                   const SizedBox(height: 24),
                   Row(
-  children: [
-    Expanded(
-      child: _statCard(
-        'TOTAL BOOKINGS',
-        '2,845',
-        '+14%',
-        AppColors.accent,
-        Icons.calendar_today_outlined,
-      ),
-    ),
-    const SizedBox(width: 16),
-    Expanded(
-      child: _statCard(
-        'REVENUE (UGX)',
-        '84.2M',
-        '+13%',
-        AppColors.accent,
-        Icons.payments_outlined,
-      ),
-    ),
-    const SizedBox(width: 16),
-    Expanded(
-      child: _statCard(
-        'ACTIVE STYLISTS',
-        '142',
-        '-21%',
-        AppColors.error,
-        Icons.content_cut_outlined,
-      ),
-    ),
-    const SizedBox(width: 16),
-    Expanded(
-      child: _statCard(
-        'AVG. RATING',
-        '98.2%',
-        null,
-        null,
-        Icons.star_outline_rounded,
-      ),
-    ),
-  ],
-),
+                    children: [
+                      Expanded(
+                        child: _statCard(
+                          'TOTAL BOOKINGS',
+                          '2,845',
+                          '+14%',
+                          AppColors.accent,
+                          Icons.calendar_today_outlined,
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: _statCard(
+                          'REVENUE (UGX)',
+                          '84.2M',
+                          '+13%',
+                          AppColors.accent,
+                          Icons.payments_outlined,
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: _statCard(
+                          'ACTIVE STYLISTS',
+                          '142',
+                          '-21%',
+                          AppColors.error,
+                          Icons.content_cut_outlined,
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: _statCard(
+                          'AVG. RATING',
+                          '98.2%',
+                          null,
+                          null,
+                          Icons.star_outline_rounded,
+                        ),
+                      ),
+                    ],
+                  ),
                   const SizedBox(height: 24),
                   Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -221,259 +199,281 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
     );
   }
 
-Widget _statCard(
-    String label, String value, String? badge, Color? badgeColor, IconData icon) {
-  return Container(
-    padding: const EdgeInsets.all(18),
-    decoration: BoxDecoration(
-      color: AppColors.surface,
-      borderRadius: BorderRadius.circular(16),
-      boxShadow: const [
-        BoxShadow(
-            color: AppColors.shadow, blurRadius: 24, offset: Offset(0, 4)),
-      ],
-    ),
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Container(
-              width: 40,
-              height: 40,
-              decoration: BoxDecoration(
-                color: AppColors.surfaceContainer,
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Icon(icon, color: AppColors.primary, size: 20),
-            ),
-            if (badge != null)
+  Widget _statCard(
+      String label, String value, String? badge, Color? badgeColor, IconData icon) {
+    return Container(
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: const [
+          BoxShadow(
+              color: AppColors.shadow, blurRadius: 24, offset: Offset(0, 4)),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
               Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                width: 40,
+                height: 40,
                 decoration: BoxDecoration(
-                  color: (badgeColor ?? AppColors.accent).withOpacity(0.12),
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(
-                    color: badgeColor ?? AppColors.accent,
-                    width: 1.2,
-                  ),
+                  color: AppColors.surfaceContainer,
+                  borderRadius: BorderRadius.circular(12),
                 ),
-                child: Text(badge,
-                    style: TextStyle(
-                        fontSize: 10,
-                        fontWeight: FontWeight.w600,
-                        color: badgeColor ?? AppColors.accent)),
+                child: Icon(icon, color: AppColors.primary, size: 20),
               ),
-          ],
-        ),
-        const SizedBox(height: 14),
-        Text(label.toUpperCase(),
-            style: AppTextStyles.labelCaps
-                .copyWith(fontSize: 10, color: AppColors.textDark)),
-        const SizedBox(height: 4),
-        Text(value,
-            style: const TextStyle(
-                fontFamily: 'Montserrat',
-                fontSize: 20,
-                fontWeight: FontWeight.w700,
-                color: AppColors.primary)),
-      ],
-    ),
-  );
-}
-
-Widget _bookingDensityCard() {
-  return Container(
-    padding: const EdgeInsets.all(20),
-    decoration: BoxDecoration(
-      color: AppColors.surface,
-      borderRadius: BorderRadius.circular(16),
-      boxShadow: const [
-        BoxShadow(color: AppColors.shadow, blurRadius: 24, offset: Offset(0, 4)),
-      ],
-    ),
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text('Booking Density: Kampala',
-                    style: AppTextStyles.headlineMd.copyWith(fontSize: 15)),
-                Text('Real-time demand map across city sectors',
-                    style: AppTextStyles.bodyMd.copyWith(fontSize: 12)),
-              ],
-            ),
-            // Two separate boxes for Low and High
-            Row(
-              children: [
+              if (badge != null)
                 Container(
-                  width: 28,
-                  height: 28,
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                   decoration: BoxDecoration(
-                    color: AppColors.surfaceContainer,
-                    borderRadius: BorderRadius.circular(6),
+                    color: (badgeColor ?? AppColors.accent).withOpacity(0.12),
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(
+                      color: badgeColor ?? AppColors.accent,
+                      width: 1.2,
+                    ),
                   ),
-                  child: Center(
-                    child: Text('L',
-                        style: AppTextStyles.labelCaps.copyWith(
-                            fontSize: 9, color: AppColors.textGrey)),
-                  ),
+                  child: Text(badge,
+                      style: TextStyle(
+                          fontSize: 10,
+                          fontWeight: FontWeight.w600,
+                          color: badgeColor ?? AppColors.accent)),
                 ),
-                const SizedBox(width: 6),
-                Container(
-                  width: 28,
-                  height: 28,
-                  decoration: BoxDecoration(
-                    color: AppColors.primary,
-                    borderRadius: BorderRadius.circular(6),
-                  ),
-                  child: Center(
-                    child: Text('H',
-                        style: AppTextStyles.labelCaps
-                            .copyWith(fontSize: 9, color: Colors.white)),
-                  ),
-                ),
-              ],
-            ),
-          ],
-        ),
-        const SizedBox(height: 16),
-        // Heatmap grid
-        Container(
-          padding: const EdgeInsets.all(12),
-          decoration: BoxDecoration(
-            color: AppColors.surfaceContainerLow,
-            borderRadius: BorderRadius.circular(12),
+            ],
           ),
-          child: GridView.builder(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 8,
-              crossAxisSpacing: 6,
-              mainAxisSpacing: 6,
+          const SizedBox(height: 14),
+          Text(label.toUpperCase(),
+              style: AppTextStyles.labelCaps
+                  .copyWith(fontSize: 10, color: AppColors.textDark)),
+          const SizedBox(height: 4),
+          Text(value,
+              style: const TextStyle(
+                  fontFamily: 'Montserrat',
+                  fontSize: 20,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.primary)),
+        ],
+      ),
+    );
+  }
+
+  Widget _bookingDensityCard() {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: const [
+          BoxShadow(color: AppColors.shadow, blurRadius: 24, offset: Offset(0, 4)),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('Booking Density: Kampala',
+                      style: AppTextStyles.headlineMd.copyWith(fontSize: 15)),
+                  Text('Real-time demand map across city sectors',
+                      style: AppTextStyles.bodyMd.copyWith(fontSize: 12)),
+                ],
+              ),
+              Row(
+                children: [
+                  Container(
+                    width: 28,
+                    height: 28,
+                    decoration: BoxDecoration(
+                      color: AppColors.surfaceContainer,
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: Center(
+                      child: Text('L',
+                          style: AppTextStyles.labelCaps.copyWith(
+                              fontSize: 9, color: AppColors.textGrey)),
+                    ),
+                  ),
+                  const SizedBox(width: 6),
+                  Container(
+                    width: 28,
+                    height: 28,
+                    decoration: BoxDecoration(
+                      color: AppColors.primary,
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: Center(
+                      child: Text('H',
+                          style: AppTextStyles.labelCaps
+                              .copyWith(fontSize: 9, color: Colors.white)),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: AppColors.surfaceContainerLow,
+              borderRadius: BorderRadius.circular(12),
             ),
-            itemCount: 32,
-            itemBuilder: (context, index) {
-              final intensity = (index * 37) % 100 / 100;
-              return Container(
-                decoration: BoxDecoration(
-                  color: AppColors.primary.withOpacity(0.1 + intensity * 0.75),
-                  borderRadius: BorderRadius.circular(6),
-                ),
+            child: GridView.builder(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 8,
+                crossAxisSpacing: 6,
+                mainAxisSpacing: 6,
+              ),
+              itemCount: 32,
+              itemBuilder: (context, index) {
+                final intensity = (index * 37) % 100 / 100;
+                return Container(
+                  decoration: BoxDecoration(
+                    color: AppColors.primary.withOpacity(0.1 + intensity * 0.75),
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                );
+              },
+            ),
+          ),
+          const SizedBox(height: 16),
+          Center(
+            child: Icon(Icons.map_outlined,
+                color: AppColors.outlineVariant, size: 64),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _popularServicesCard() {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: AppColors.primary,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+              color: AppColors.primary.withOpacity(0.2),
+              blurRadius: 24,
+              offset: const Offset(0, 4)),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text('Popular Services',
+              style: TextStyle(
+                  fontFamily: 'Montserrat',
+                  fontSize: 15,
+                  fontWeight: FontWeight.w700,
+                  color: Colors.white)),
+          const Text('Volume share by category',
+              style: TextStyle(fontSize: 11, color: Color(0xFFD4BCFA))),
+          const SizedBox(height: 20),
+          FutureBuilder<List<ServiceStat>>(
+            future: _servicesFuture,
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 16),
+                  child: Center(
+                    child: CircularProgressIndicator(color: Colors.white),
+                  ),
+                );
+              }
+
+              if (snapshot.hasError) {
+                return Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  child: Text('Error loading services: ${snapshot.error}',
+                      style: const TextStyle(
+                          fontSize: 12, color: Color(0xFFD4BCFA))),
+                );
+              }
+
+              final services = snapshot.data ?? [];
+
+              if (services.isEmpty) {
+                return Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  child: Text('No services match "$_searchQuery"',
+                      style: const TextStyle(
+                          fontSize: 12, color: Color(0xFFD4BCFA))),
+                );
+              }
+
+              return Column(
+                children: services.map((s) => _serviceBar(s)).toList(),
               );
             },
           ),
-        ),
-        const SizedBox(height: 16),
-        // map icon
-        Center(
-          child: Icon(Icons.map_outlined,
-              color: AppColors.outlineVariant, size: 64),
-        ),
-      ],
-    ),
-  );
-}
+          const SizedBox(height: 12),
+          CustomPaint(
+            size: const Size(60, 60),
+            painter: _SunPainter(),
+          ),
+        ],
+      ),
+    );
+  }
 
-Widget _popularServicesCard() {
-  final services = _filteredServices;
-  return Container(
-    padding: const EdgeInsets.all(20),
-    decoration: BoxDecoration(
-      color: AppColors.primary,
-      borderRadius: BorderRadius.circular(16),
-      boxShadow: [
-        BoxShadow(
-            color: AppColors.primary.withOpacity(0.2),
-            blurRadius: 24,
-            offset: const Offset(0, 4)),
-      ],
-    ),
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text('Popular Services',
-            style: TextStyle(
-                fontFamily: 'Montserrat',
-                fontSize: 15,
-                fontWeight: FontWeight.w700,
-                color: Colors.white)),
-        const Text('Volume share by category',
-            style: TextStyle(fontSize: 11, color: Color(0xFFD4BCFA))),
-        const SizedBox(height: 20),
-        if (services.isEmpty)
-          Padding(
-            padding: const EdgeInsets.symmetric(vertical: 16),
-            child: Text('No services match "$_searchQuery"',
-                style: const TextStyle(
-                    fontSize: 12, color: Color(0xFFD4BCFA))),
-          )
-        else
-          ...services.map((s) => _serviceBar(s)),
-        const SizedBox(height: 12),
-        // Sun illustration circle
-        CustomPaint(
-          size: const Size(60, 60),
-          painter: _SunPainter(),
-        ),
-      ],
-    ),
-  );
-}
+  Widget _serviceBar(ServiceStat s) {
+    final percent = s.percent;
+    final goldOpacity = 0.4 + (percent / 100) * 0.6;
+    final goldColor = Color.lerp(
+      const Color(0xFFF5A623).withOpacity(0.4),
+      const Color(0xFFF5A623),
+      percent / 48.0,
+    )!;
 
-Widget _serviceBar(Map<String, dynamic> s) {
-  final percent = s['percent'] as int;
-  // Gold brightness scales with percentage
-  final goldOpacity = 0.4 + (percent / 100) * 0.6;
-  final goldColor = Color.lerp(
-    const Color(0xFFF5A623).withOpacity(0.4),
-    const Color(0xFFF5A623),
-    percent / 48.0,
-  )!;
-
-  return Padding(
-    padding: const EdgeInsets.only(bottom: 16),
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(s['name'],
-            style: const TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
-                color: Colors.white)),
-        const SizedBox(height: 6),
-        Row(
-          children: [
-            Expanded(
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(4),
-                child: LinearProgressIndicator(
-                  value: percent / 100,
-                  minHeight: 6,
-                  backgroundColor: Colors.white.withOpacity(0.15),
-                  valueColor: AlwaysStoppedAnimation(goldColor),
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(s.name,
+              style: const TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.white)),
+          const SizedBox(height: 6),
+          Row(
+            children: [
+              Expanded(
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(4),
+                  child: LinearProgressIndicator(
+                    value: percent / 100,
+                    minHeight: 6,
+                    backgroundColor: Colors.white.withOpacity(0.15),
+                    valueColor: AlwaysStoppedAnimation(goldColor),
+                  ),
                 ),
               ),
-            ),
-            const SizedBox(width: 10),
-            Text('$percent%',
-                style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w700,
-                    color: Colors.white.withOpacity(goldOpacity))),
-          ],
-        ),
-      ],
-    ),
-  );
-}
+              const SizedBox(width: 10),
+              Text('$percent%',
+                  style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
+                      color: Colors.white.withOpacity(goldOpacity))),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
 
   Widget _cohortsCard() {
     return Container(
@@ -541,7 +541,32 @@ Widget _serviceBar(Map<String, dynamic> s) {
             ],
           ),
           const SizedBox(height: 8),
-          ..._cohorts.map((c) => _cohortRow(c)),
+          FutureBuilder<List<CohortMonth>>(
+            future: _cohortsFuture,
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 16),
+                  child: Center(
+                    child: CircularProgressIndicator(color: AppColors.primary),
+                  ),
+                );
+              }
+
+              if (snapshot.hasError) {
+                return Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  child: Text('Error loading cohorts: ${snapshot.error}',
+                      style: AppTextStyles.bodyMd),
+                );
+              }
+
+              final cohorts = snapshot.data ?? [];
+              return Column(
+                children: cohorts.map((c) => _cohortRow(c)).toList(),
+              );
+            },
+          ),
         ],
       ),
     );
@@ -561,23 +586,21 @@ Widget _serviceBar(Map<String, dynamic> s) {
     );
   }
 
-  Widget _cohortRow(Map<String, dynamic> c) {
-    final values = c['values'] as List;
+  Widget _cohortRow(CohortMonth c) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 6),
       child: Row(
         children: [
           SizedBox(
               width: 130,
-              child: Text(c['month'],
+              child: Text(c.month,
                   style: AppTextStyles.bodyMd.copyWith(
                       fontWeight: FontWeight.w600,
                       color: AppColors.textDark))),
           SizedBox(
               width: 90,
-              child:
-                  Text('${c['newCustomers']}', style: AppTextStyles.bodyMd)),
-          ...values.map((v) => Expanded(
+              child: Text('${c.newCustomers}', style: AppTextStyles.bodyMd)),
+          ...c.values.map((v) => Expanded(
                 child: Center(
                   child: v == null
                       ? const SizedBox()
@@ -609,7 +632,6 @@ Widget _serviceBar(Map<String, dynamic> s) {
   }
 
   Widget _topStylistEfficiencyCard() {
-    final stylists = _filteredStylists;
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
@@ -634,27 +656,54 @@ Widget _serviceBar(Map<String, dynamic> s) {
             ],
           ),
           const SizedBox(height: 16),
-          if (stylists.isEmpty)
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: 8),
-              child: Row(
-                children: [
-                  Icon(Icons.search_off_rounded,
-                      color: AppColors.outlineVariant, size: 20),
-                  const SizedBox(width: 8),
-                  Text('No stylists match "$_searchQuery"',
+          FutureBuilder<List<StylistEfficiency>>(
+            future: _stylistsFuture,
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 8),
+                  child: Center(
+                    child: CircularProgressIndicator(color: AppColors.primary),
+                  ),
+                );
+              }
+
+              if (snapshot.hasError) {
+                return Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 8),
+                  child: Text('Error loading stylists: ${snapshot.error}',
                       style: AppTextStyles.bodyMd),
-                ],
-              ),
-            )
-          else
-            ...stylists.map((s) => _stylistEfficiencyRow(s)),
+                );
+              }
+
+              final stylists = snapshot.data ?? [];
+
+              if (stylists.isEmpty) {
+                return Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 8),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.search_off_rounded,
+                          color: AppColors.outlineVariant, size: 20),
+                      const SizedBox(width: 8),
+                      Text('No stylists match "$_searchQuery"',
+                          style: AppTextStyles.bodyMd),
+                    ],
+                  ),
+                );
+              }
+
+              return Column(
+                children: stylists.map((s) => _stylistEfficiencyRow(s)).toList(),
+              );
+            },
+          ),
         ],
       ),
     );
   }
 
-  Widget _stylistEfficiencyRow(Map<String, dynamic> s) {
+  Widget _stylistEfficiencyRow(StylistEfficiency s) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 14),
       child: Row(
@@ -663,12 +712,7 @@ Widget _serviceBar(Map<String, dynamic> s) {
             radius: 16,
             backgroundColor: AppColors.surfaceContainer,
             child: Text(
-                s['name']
-                    .toString()
-                    .split(' ')
-                    .map((e) => e[0])
-                    .take(2)
-                    .join(),
+                s.name.split(' ').map((e) => e[0]).take(2).join(),
                 style: const TextStyle(
                     fontSize: 11,
                     fontWeight: FontWeight.w700,
@@ -679,7 +723,7 @@ Widget _serviceBar(Map<String, dynamic> s) {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(s['name'],
+                Text(s.name,
                     style: AppTextStyles.bodyMd.copyWith(
                         fontWeight: FontWeight.w600,
                         color: AppColors.textDark)),
@@ -687,7 +731,7 @@ Widget _serviceBar(Map<String, dynamic> s) {
                 ClipRRect(
                   borderRadius: BorderRadius.circular(4),
                   child: LinearProgressIndicator(
-                    value: s['utilization'],
+                    value: s.utilization,
                     minHeight: 5,
                     backgroundColor: AppColors.surfaceContainer,
                     valueColor:
@@ -698,7 +742,7 @@ Widget _serviceBar(Map<String, dynamic> s) {
             ),
           ),
           const SizedBox(width: 10),
-          Text('${(s['utilization'] * 100).toInt()}% Utilization',
+          Text('${(s.utilization * 100).toInt()}% Utilization',
               style: AppTextStyles.labelCaps.copyWith(fontSize: 10)),
         ],
       ),
@@ -778,7 +822,7 @@ Widget _serviceBar(Map<String, dynamic> s) {
                     controller: _searchController,
                     onChanged: (val) {
                       setState(() => _searchQuery = val);
-                      debugPrint('Analytics search: $val');
+                      _loadFiltered();
                     },
                     style: const TextStyle(
                         fontSize: 13, color: AppColors.textDark),
@@ -796,6 +840,7 @@ Widget _serviceBar(Map<String, dynamic> s) {
                     onTap: () {
                       _searchController.clear();
                       setState(() => _searchQuery = '');
+                      _loadFiltered();
                     },
                     child: const Icon(Icons.close,
                         size: 16, color: AppColors.textGrey),
@@ -842,7 +887,6 @@ Widget _serviceBar(Map<String, dynamic> s) {
   }
 }
 
-
 class _SunPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
@@ -855,36 +899,22 @@ class _SunPainter extends CustomPainter {
     final center = Offset(size.width / 2, size.height / 2);
     final radius = size.width * 0.22;
 
-    // Circle
     canvas.drawCircle(center, radius, paint);
 
-    // Radiating lines of varying length
     final lineLengths = [8.0, 12.0, 6.0, 14.0, 9.0, 13.0, 7.0, 11.0];
     final count = lineLengths.length;
     for (int i = 0; i < count; i++) {
       final angle = (i * 2 * 3.14159) / count;
       final start = Offset(
-        center.dx + (radius + 4) * cos(angle),
-        center.dy + (radius + 4) * sin(angle),
+        center.dx + (radius + 4) * math.cos(angle),
+        center.dy + (radius + 4) * math.sin(angle),
       );
       final end = Offset(
-        center.dx + (radius + 4 + lineLengths[i]) * cos(angle),
-        center.dy + (radius + 4 + lineLengths[i]) * sin(angle),
+        center.dx + (radius + 4 + lineLengths[i]) * math.cos(angle),
+        center.dy + (radius + 4 + lineLengths[i]) * math.sin(angle),
       );
       canvas.drawLine(start, end, paint);
     }
-  }
-
-  double cos(double angle) => _cos(angle);
-  double sin(double angle) => _sin(angle);
-
-  double _cos(double x) {
-    // Use dart:math
-    return math.cos(x);
-  }
-
-  double _sin(double x) {
-    return math.sin(x);
   }
 
   @override

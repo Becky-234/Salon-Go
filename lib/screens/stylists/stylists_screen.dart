@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:saloon_go/core/theme.dart';
+import 'package:saloon_go/models/stylist.dart';
+import 'package:saloon_go/repositories/stylist_repository.dart';
 
 class StylistsScreen extends StatefulWidget {
   const StylistsScreen({super.key});
@@ -9,8 +11,18 @@ class StylistsScreen extends StatefulWidget {
 }
 
 class _StylistsScreenState extends State<StylistsScreen> {
+  final StylistRepository _repository = StylistRepository();
+
   String _searchQuery = '';
   final TextEditingController _searchController = TextEditingController();
+
+  late Future<List<Stylist>> _stylistsFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadStylists();
+  }
 
   @override
   void dispose() {
@@ -18,54 +30,14 @@ class _StylistsScreenState extends State<StylistsScreen> {
     super.dispose();
   }
 
-  final List<Map<String, dynamic>> _allStylists = [
-    {
-      'name': 'Zahara Namono',
-      'specialty': 'Artist: Briston',
-      'initials': 'ZN',
-      'earnings': 'UGX 2.1M',
-      'services': 142,
-      'rating': 4.9,
-    },
-    {
-      'name': 'Brian Okello',
-      'specialty': 'Skin & Make Specialist',
-      'initials': 'BO',
-      'earnings': 'UGX 1.8M',
-      'services': 89,
-      'rating': 4.8,
-    },
-    {
-      'name': 'Grace Akello',
-      'specialty': 'Booth MAJA',
-      'initials': 'GA',
-      'earnings': 'UGX 3.4M',
-      'services': 215,
-      'rating': 5.0,
-    },
-    {
-      'name': 'Sanyu Mukasa',
-      'specialty': 'Neutral New Specialist',
-      'initials': 'SM',
-      'earnings': 'UGX 1.2M',
-      'services': 56,
-      'rating': 4.7,
-    },
-  ];
-
-  List<Map<String, dynamic>> get _filteredStylists {
-    if (_searchQuery.isEmpty) return _allStylists;
-    final q = _searchQuery.toLowerCase();
-    return _allStylists.where((s) {
-      return s['name'].toString().toLowerCase().contains(q) ||
-          s['specialty'].toString().toLowerCase().contains(q);
-    }).toList();
+  void _loadStylists() {
+    setState(() {
+      _stylistsFuture = _repository.fetchFilteredStylists(query: _searchQuery);
+    });
   }
 
   @override
   Widget build(BuildContext context) {
-    final stylists = _filteredStylists;
-
     return Scaffold(
       backgroundColor: AppColors.background,
       body: Column(
@@ -156,38 +128,68 @@ class _StylistsScreenState extends State<StylistsScreen> {
                     ],
                   ),
                   const SizedBox(height: 24),
-                  if (stylists.isEmpty)
-                    Center(
-                      child: Padding(
-                        padding: const EdgeInsets.all(40),
-                        child: Column(
-                          children: [
-                            Icon(Icons.search_off_rounded,
-                                color: AppColors.outlineVariant, size: 40),
-                            const SizedBox(height: 12),
-                            Text('No stylists match "$_searchQuery"',
-                                style: AppTextStyles.bodyMd),
-                          ],
-                        ),
-                      ),
-                    )
-                  else
-                    LayoutBuilder(
-                      builder: (context, constraints) {
-                        final cardWidth = (constraints.maxWidth - 32) / 3;
-                        return Wrap(
-                          spacing: 16,
-                          runSpacing: 16,
-                          children: [
-                            ...stylists.map((s) =>
-                                SizedBox(width: cardWidth, child: _stylistCard(s))),
-                            if (_searchQuery.isEmpty)
-                              SizedBox(
-                                  width: cardWidth, child: _onboardSlotCard()),
-                          ],
+                  FutureBuilder<List<Stylist>>(
+                    future: _stylistsFuture,
+                    builder: (context, snapshot) {
+                      if (snapshot.connectionState == ConnectionState.waiting) {
+                        return const Center(
+                          child: Padding(
+                            padding: EdgeInsets.all(40),
+                            child: CircularProgressIndicator(
+                                color: AppColors.primary),
+                          ),
                         );
-                      },
-                    ),
+                      }
+
+                      if (snapshot.hasError) {
+                        return Center(
+                          child: Padding(
+                            padding: const EdgeInsets.all(40),
+                            child: Text(
+                                'Error loading stylists: ${snapshot.error}',
+                                style: AppTextStyles.bodyMd),
+                          ),
+                        );
+                      }
+
+                      final stylists = snapshot.data ?? [];
+
+                      if (stylists.isEmpty) {
+                        return Center(
+                          child: Padding(
+                            padding: const EdgeInsets.all(40),
+                            child: Column(
+                              children: [
+                                const Icon(Icons.search_off_rounded,
+                                    color: AppColors.outlineVariant, size: 40),
+                                const SizedBox(height: 12),
+                                Text('No stylists match "$_searchQuery"',
+                                    style: AppTextStyles.bodyMd),
+                              ],
+                            ),
+                          ),
+                        );
+                      }
+
+                      return LayoutBuilder(
+                        builder: (context, constraints) {
+                          final cardWidth = (constraints.maxWidth - 32) / 3;
+                          return Wrap(
+                            spacing: 16,
+                            runSpacing: 16,
+                            children: [
+                              ...stylists.map((s) => SizedBox(
+                                  width: cardWidth, child: _stylistCard(s))),
+                              if (_searchQuery.isEmpty)
+                                SizedBox(
+                                    width: cardWidth,
+                                    child: _onboardSlotCard()),
+                            ],
+                          );
+                        },
+                      );
+                    },
+                  ),
                 ],
               ),
             ),
@@ -320,7 +322,7 @@ class _StylistsScreenState extends State<StylistsScreen> {
     );
   }
 
-  Widget _stylistCard(Map<String, dynamic> stylist) {
+  Widget _stylistCard(Stylist stylist) {
     return Container(
       decoration: BoxDecoration(
         color: AppColors.surface,
@@ -357,7 +359,7 @@ class _StylistsScreenState extends State<StylistsScreen> {
                   ),
                 ),
                 child: Center(
-                  child: Text(stylist['initials'],
+                  child: Text(stylist.initials,
                       style: TextStyle(
                           fontSize: 32,
                           fontWeight: FontWeight.w700,
@@ -407,7 +409,7 @@ class _StylistsScreenState extends State<StylistsScreen> {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Expanded(
-                      child: Text(stylist['name'],
+                      child: Text(stylist.name,
                           style: const TextStyle(
                               fontSize: 14,
                               fontWeight: FontWeight.w700,
@@ -416,7 +418,7 @@ class _StylistsScreenState extends State<StylistsScreen> {
                     ),
                     Row(
                       children: [
-                        Text(stylist['rating'].toString(),
+                        Text(stylist.rating.toString(),
                             style: const TextStyle(
                                 fontSize: 12,
                                 fontWeight: FontWeight.w600,
@@ -429,7 +431,7 @@ class _StylistsScreenState extends State<StylistsScreen> {
                   ],
                 ),
                 const SizedBox(height: 2),
-                Text(stylist['specialty'],
+                Text(stylist.specialty,
                     style: const TextStyle(
                         fontSize: 11,
                         fontStyle: FontStyle.italic,
@@ -447,7 +449,7 @@ class _StylistsScreenState extends State<StylistsScreen> {
                               style: AppTextStyles.labelCaps.copyWith(
                                   fontSize: 8, color: AppColors.textGrey)),
                           const SizedBox(height: 2),
-                          Text(stylist['earnings'],
+                          Text(stylist.earnings,
                               style: const TextStyle(
                                   fontSize: 12,
                                   fontWeight: FontWeight.w700,
@@ -463,7 +465,7 @@ class _StylistsScreenState extends State<StylistsScreen> {
                               style: AppTextStyles.labelCaps.copyWith(
                                   fontSize: 8, color: AppColors.textGrey)),
                           const SizedBox(height: 2),
-                          Text('${stylist['services']}',
+                          Text('${stylist.services}',
                               style: const TextStyle(
                                   fontSize: 12,
                                   fontWeight: FontWeight.w700,
@@ -570,7 +572,7 @@ class _StylistsScreenState extends State<StylistsScreen> {
                     controller: _searchController,
                     onChanged: (val) {
                       setState(() => _searchQuery = val);
-                      debugPrint('Stylist search: $val');
+                      _loadStylists();
                     },
                     style: const TextStyle(
                         fontSize: 13, color: AppColors.textDark),
@@ -588,6 +590,7 @@ class _StylistsScreenState extends State<StylistsScreen> {
                     onTap: () {
                       _searchController.clear();
                       setState(() => _searchQuery = '');
+                      _loadStylists();
                     },
                     child: const Icon(Icons.close,
                         size: 16, color: AppColors.textGrey),
