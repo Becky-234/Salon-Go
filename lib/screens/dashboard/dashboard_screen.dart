@@ -100,14 +100,28 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     ],
                   ),
                   const SizedBox(height: 24),
-                  // Chart + Activity
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Expanded(flex: 3, child: EarningsChart()),
-                      const SizedBox(width: 16),
-                      const Expanded(flex: 2, child: RecentActivity()),
-                    ],
+                  // Chart + Activity — a bounded-height SizedBox (not
+                  // IntrinsicHeight) so both cards stretch to match. fl_chart
+                  // uses a LayoutBuilder internally, which throws if asked
+                  // for intrinsic dimensions, so IntrinsicHeight isn't safe
+                  // here. A fixed height passed down via BoxConstraints
+                  // avoids that entirely.
+                  //
+                  // NOTE: 360 is a starting point — if RecentActivity ever
+                  // gets more mock items than fit, its list scrolls inside
+                  // this height rather than overflowing (see
+                  // recent_activity.dart), so tweak this number to taste
+                  // rather than removing the SizedBox.
+                  SizedBox(
+                    height: 360,
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: const [
+                        Expanded(flex: 3, child: EarningsChart()),
+                        SizedBox(width: 16),
+                        Expanded(flex: 2, child: RecentActivity()),
+                      ],
+                    ),
                   ),
                   const SizedBox(height: 24),
                   // Top Stylists + Inventory
