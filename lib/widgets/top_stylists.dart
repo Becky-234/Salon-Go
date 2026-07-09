@@ -33,14 +33,21 @@ class TopStylists extends StatelessWidget {
       padding: const EdgeInsets.only(bottom: 14),
       child: Row(
         children: [
-          CircleAvatar(
-            radius: 20,
-            backgroundColor: AppColors.surfaceContainer,
-            child: Text(s['initials'],
-                style: const TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w700,
-                    color: AppColors.primary)),
+          Container(
+            padding: const EdgeInsets.all(2),
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              border: Border.all(color: AppColors.accent, width: 2),
+            ),
+            child: CircleAvatar(
+              radius: 20,
+              backgroundColor: AppColors.surfaceContainer,
+              child: Text(s['initials'],
+                  style: const TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.primary)),
+            ),
           ),
           const SizedBox(width: 12),
           Expanded(
