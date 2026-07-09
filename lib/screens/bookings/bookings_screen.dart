@@ -641,13 +641,6 @@ class _BookingsScreenState extends State<BookingsScreen> {
           const SizedBox(width: 16),
           Row(
             children: [
-              CircleAvatar(
-                radius: 16,
-                backgroundColor: AppColors.surfaceContainer,
-                child: const Icon(Icons.person,
-                    color: AppColors.primary, size: 18),
-              ),
-              const SizedBox(width: 8),
               const Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -661,6 +654,20 @@ class _BookingsScreenState extends State<BookingsScreen> {
                       style:
                           TextStyle(fontSize: 11, color: AppColors.textGrey)),
                 ],
+              ),
+              const SizedBox(width: 8),
+              Container(
+                padding: const EdgeInsets.all(2),
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  border: Border.all(color: AppColors.accent, width: 2),
+                ),
+                child: CircleAvatar(
+                  radius: 16,
+                  backgroundColor: AppColors.surfaceContainer,
+                  child: const Icon(Icons.person,
+                      color: AppColors.primary, size: 18),
+                ),
               ),
             ],
           ),
