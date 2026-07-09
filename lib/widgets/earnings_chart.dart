@@ -56,10 +56,12 @@ class _EarningsChartState extends State<EarningsChart> {
                       style: AppTextStyles.bodyMd.copyWith(fontSize: 12)),
                 ],
               ),
+              // Whole toggle track is light purple — top, bottom, and
+              // both sides around the active pill.
               Container(
                 padding: const EdgeInsets.all(3),
                 decoration: BoxDecoration(
-                  border: Border.all(color: AppColors.outlineVariant),
+                  color: AppColors.surfaceContainerLow,
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Row(
@@ -72,8 +74,7 @@ class _EarningsChartState extends State<EarningsChart> {
             ],
           ),
           const SizedBox(height: 24),
-          SizedBox(
-            height: 200,
+          Expanded(
             child: BarChart(
               BarChartData(
                 alignment: BarChartAlignment.spaceAround,
@@ -83,6 +84,9 @@ class _EarningsChartState extends State<EarningsChart> {
                   enabled: true,
                   touchTooltipData: BarTouchTooltipData(
                     getTooltipColor: (_) => AppColors.primary,
+                    tooltipPadding:
+                        const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    tooltipMargin: 8,
                     getTooltipItem: (group, groupIndex, rod, rodIndex) {
                       final val = rod.toY;
                       final label = showRevenue
@@ -92,8 +96,8 @@ class _EarningsChartState extends State<EarningsChart> {
                         label,
                         const TextStyle(
                           color: Colors.white,
-                          fontSize: 11,
-                          fontWeight: FontWeight.w600,
+                          fontSize: 13,
+                          fontWeight: FontWeight.w800,
                         ),
                       );
                     },
@@ -136,7 +140,6 @@ class _EarningsChartState extends State<EarningsChart> {
                 barGroups: currentData.asMap().entries.map((e) {
                   final isHighlight = e.key == 1;
                   final bar1 = e.value['bar1'] as double;
-                  final bar2 = e.value['bar2'] as double;
                   return BarChartGroupData(
                     x: e.key,
                     barRods: [
@@ -145,17 +148,10 @@ class _EarningsChartState extends State<EarningsChart> {
                         color: isHighlight
                             ? AppColors.accent
                             : AppColors.surfaceContainer,
-                        width: 8,
-                        borderRadius: BorderRadius.circular(4),
-                      ),
-                      BarChartRodData(
-                        toY: bar2,
-                        color: AppColors.surfaceContainer,
-                        width: 8,
-                        borderRadius: BorderRadius.circular(4),
+                        width: 32,
+                        borderRadius: BorderRadius.circular(6),
                       ),
                     ],
-                    barsSpace: 4,
                   );
                 }).toList(),
               ),
@@ -173,10 +169,18 @@ class _EarningsChartState extends State<EarningsChart> {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
         decoration: BoxDecoration(
-          color: isActive ? AppColors.surface : AppColors.surfaceContainerLow,
+          // Active pill sits on top of the light purple track; inactive
+          // is transparent so the track shows through underneath it.
+          color: isActive ? AppColors.surface : Colors.transparent,
           borderRadius: BorderRadius.circular(6),
-          border: isActive
-              ? Border.all(color: AppColors.outlineVariant)
+          boxShadow: isActive
+              ? [
+                  BoxShadow(
+                    color: AppColors.primary.withOpacity(0.10),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
+                ]
               : null,
         ),
         child: Text(
