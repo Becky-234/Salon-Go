@@ -81,8 +81,8 @@ class Sidebar extends StatelessWidget {
           // Nav items
           _navItem(0, Icons.grid_view_rounded, 'Dashboard'),
           _navItem(1, Icons.calendar_month_rounded, 'Bookings'),
-          _navItem(2, Icons.people_alt_rounded, 'Stylists'),
-          _navItem(3, Icons.person_outline_rounded, 'Customers'),
+          _navItem(2, Icons.content_cut_rounded, 'Stylists'),
+          _navItem(3, Icons.people_alt_rounded, 'Customers'),
           _navItem(4, Icons.insert_chart_outlined_rounded, 'Analytics'),
           _navItem(5, Icons.settings_outlined, 'Settings'),
 
