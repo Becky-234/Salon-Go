@@ -7,6 +7,8 @@ class RecentActivity extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final activities = MockData.recentActivity;
+
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
@@ -31,27 +33,33 @@ class RecentActivity extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 16),
-          ...MockData.recentActivity.map((item) => _activityItem(item)),
+          Expanded(
+            child: SingleChildScrollView(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: activities.asMap().entries.map(
+                      (entry) => _activityItem(
+                        entry.value,
+                        index: entry.key,
+                        isLast: entry.key == activities.length - 1,
+                      ),
+                    ).toList(),
+              ),
+            ),
+          ),
         ],
       ),
     );
   }
 
-  Widget _activityItem(Map<String, dynamic> item) {
+  Widget _activityItem(Map<String, dynamic> item,
+      {required int index, required bool isLast}) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 16),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          CircleAvatar(
-            radius: 18,
-            backgroundColor: AppColors.surfaceContainer,
-            child: Text(item['initials'],
-                style: const TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.primary)),
-          ),
+          _activityAvatar(item, index: index, isLast: isLast),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
@@ -93,6 +101,72 @@ class RecentActivity extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  /// Builds the leading avatar for an activity row.
+  ///
+  /// - The second activity (index 1) is a payment confirmation, so it gets a
+  ///   light-green circle with a verified icon instead of a person's initials.
+  /// - The last activity is a review, so it gets a light-purple circle with a
+  ///   purple star icon.
+  /// - Everything else falls back to the normal initials avatar.
+  /// Only the initials avatar gets the gold ring border — the payment and
+  /// review icons do not.
+  Widget _activityAvatar(Map<String, dynamic> item,
+      {required int index, required bool isLast}) {
+    const double size = 36;
+
+    if (index == 1) {
+      // Payment activity — no gold border, only initials avatars get that
+      return Container(
+        width: size,
+        height: size,
+        decoration: const BoxDecoration(
+          color: Color(0xFFDCFCE7), // light green
+          shape: BoxShape.circle,
+        ),
+        child: const Icon(Icons.verified_rounded,
+            color: AppColors.success, size: 16),
+      );
+    }
+
+    if (isLast) {
+      // Review activity — no gold border, purple star instead of gold
+      return Container(
+        width: size,
+        height: size,
+        decoration: const BoxDecoration(
+          color: AppColors.surfaceContainer, // light purple
+          shape: BoxShape.circle,
+        ),
+        child: const Icon(Icons.star_rounded,
+            color: AppColors.primary, size: 16),
+      );
+    }
+
+    // Default: person avatar with initials
+    return Container(
+      width: size,
+      height: size,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        border: Border.all(color: AppColors.accent, width: 2),
+      ),
+      child: Container(
+        margin: const EdgeInsets.all(2),
+        decoration: const BoxDecoration(
+          color: AppColors.surfaceContainer,
+          shape: BoxShape.circle,
+        ),
+        child: Center(
+          child: Text(item['initials'],
+              style: const TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.primary)),
+        ),
       ),
     );
   }
