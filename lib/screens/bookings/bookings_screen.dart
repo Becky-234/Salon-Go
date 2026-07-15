@@ -64,6 +64,13 @@ class _BookingsScreenState extends State<BookingsScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {},
+        backgroundColor: AppColors.accent,
+        foregroundColor: AppColors.primary,
+        shape: const CircleBorder(),
+        child: const Icon(Icons.add, color: AppColors.primary),
+      ),
       body: Column(
         children: [
           _topBar(),
@@ -171,7 +178,7 @@ class _BookingsScreenState extends State<BookingsScreen> {
                             ),
                             child: const Row(
                               children: [
-                                Icon(Icons.tune_rounded,
+                                Icon(Icons.filter_alt_outlined,
                                     color: Colors.white, size: 16),
                                 SizedBox(width: 8),
                                 Text('Apply Filters',
@@ -323,7 +330,6 @@ class _BookingsScreenState extends State<BookingsScreen> {
 
   Widget _tableRow(Booking b) {
     final statusColor = _statusColor(b.status);
-    final serviceColor = Color(b.serviceColorValue);
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
       decoration: const BoxDecoration(
@@ -373,14 +379,14 @@ class _BookingsScreenState extends State<BookingsScreen> {
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
               decoration: BoxDecoration(
-                color: serviceColor.withOpacity(0.1),
+                color: AppColors.surfaceContainer,
                 borderRadius: BorderRadius.circular(6),
               ),
               child: Text(b.service,
-                  style: TextStyle(
+                  style: const TextStyle(
                       fontSize: 11,
                       fontWeight: FontWeight.w600,
-                      color: serviceColor),
+                      color: AppColors.primary),
                   overflow: TextOverflow.ellipsis),
             ),
           ),
@@ -388,14 +394,21 @@ class _BookingsScreenState extends State<BookingsScreen> {
             width: 120,
             child: Row(
               children: [
-                CircleAvatar(
-                  radius: 12,
-                  backgroundColor: AppColors.surfaceContainer,
-                  child: Text(b.stylistInitials,
-                      style: const TextStyle(
-                          fontSize: 9,
-                          fontWeight: FontWeight.w700,
-                          color: AppColors.primary)),
+                Container(
+                  padding: const EdgeInsets.all(1.5),
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    border: Border.all(color: AppColors.accent, width: 1.5),
+                  ),
+                  child: CircleAvatar(
+                    radius: 12,
+                    backgroundColor: AppColors.surfaceContainer,
+                    child: Text(b.stylistInitials,
+                        style: const TextStyle(
+                            fontSize: 9,
+                            fontWeight: FontWeight.w700,
+                            color: AppColors.primary)),
+                  ),
                 ),
                 const SizedBox(width: 6),
                 Expanded(
