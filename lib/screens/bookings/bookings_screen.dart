@@ -20,6 +20,49 @@ class _BookingsScreenState extends State<BookingsScreen> {
 
   late Future<List<Booking>> _bookingsFuture;
   int _totalCount = 0;
+  DateTime _selectedDate = DateTime(2023, 10, 24);
+
+  static const List<String> _monthNames = [
+    'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+    'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+  ];
+
+  String get _selectedDateLabel {
+    final now = DateTime.now();
+    final isToday = _selectedDate.year == now.year &&
+        _selectedDate.month == now.month &&
+        _selectedDate.day == now.day;
+    final formatted =
+        '${_monthNames[_selectedDate.month - 1]} ${_selectedDate.day}';
+    return isToday ? 'Today, $formatted' : formatted;
+  }
+
+  Future<void> _pickDate() async {
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: _selectedDate,
+      firstDate: DateTime(2020),
+      lastDate: DateTime(2030),
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: Theme.of(context).colorScheme.copyWith(
+                  primary: AppColors.primary,
+                  onPrimary: Colors.white,
+                ),
+          ),
+          child: child!,
+        );
+      },
+    );
+    if (picked != null) {
+      setState(() => _selectedDate = picked);
+      // NOTE: BookingRepository doesn't filter by date yet — this updates
+      // the displayed date but not the table results. Wire a date param
+      // into fetchFilteredBookings() if/when date filtering is needed.
+      _loadBookings();
+    }
+  }
 
   @override
   void initState() {
@@ -515,21 +558,24 @@ class _BookingsScreenState extends State<BookingsScreen> {
         Text('DATE RANGE',
             style: AppTextStyles.labelCaps.copyWith(fontSize: 10)),
         const SizedBox(height: 4),
-        Container(
-          height: 40,
-          padding: const EdgeInsets.symmetric(horizontal: 12),
-          decoration: BoxDecoration(
-            color: AppColors.background,
-            borderRadius: BorderRadius.circular(8),
-            border: Border.all(color: AppColors.outlineVariant),
-          ),
-          child: const Row(
-            children: [
-              Icon(Icons.calendar_today_outlined,
-                  size: 14, color: AppColors.textGrey),
-              SizedBox(width: 8),
-              Text('Today, Oct 24', style: AppTextStyles.bodyMd),
-            ],
+        GestureDetector(
+          onTap: _pickDate,
+          child: Container(
+            height: 40,
+            padding: const EdgeInsets.symmetric(horizontal: 12),
+            decoration: BoxDecoration(
+              color: AppColors.background,
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: AppColors.outlineVariant),
+            ),
+            child: Row(
+              children: [
+                const Icon(Icons.calendar_today_outlined,
+                    size: 14, color: AppColors.textGrey),
+                const SizedBox(width: 8),
+                Text(_selectedDateLabel, style: AppTextStyles.bodyMd),
+              ],
+            ),
           ),
         ),
       ],
